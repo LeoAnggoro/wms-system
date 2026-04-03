@@ -8,26 +8,23 @@ const getSequelize = () => {
   const databaseUrl = process.env.DATABASE_URL;
   
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is not set');
+    throw new Error('DATABASE_URL environment variable is not set di Railway');
   }
 
-  // --- SOLUASI TENANT SUPABASE ---
-  // Kita ambil Project ID dari URL (ajrubsqxqcnblxqjmjsg)
-  // Ini memastikan Supabase tahu proyek mana yang kita akses
+  // Project ID Supabase kamu
   const projectId = "ajrubsqxqcnblxqjmjsg"; 
 
   sequelizeInstance = new Sequelize(databaseUrl, {
     dialect: "postgres",
     dialectOptions: {
-      ssl: process.env.DB_SSL === 'false' ? false : {
+      ssl: {
         require: true,
-        rejectUnauthorized: false
+        rejectUnauthorized: false // Wajib untuk koneksi cloud ke Supabase
       },
-      // Menambahkan session ID ke koneksi agar Supavisor (Pooler Supabase) tidak bingung
-      // Ini adalah obat mujarab untuk error "Tenant not found"
-      options: `-c user_agent=${projectId}` 
+      // --- PENYELAMAT KONEKSI ---
+      prepareThreshold: 0, // WAJIB: Agar tidak error "prepared statement" di Pooler 6543
+      options: `-c user_agent=${projectId}` // Agar Supabase tidak bingung "Tenant not found"
     },
-    // Kita nyalakan logging agar bisa melihat proses pembuatan tabel di log Railway
     logging: (msg) => console.log(`[Sequelize]: ${msg}`), 
     pool: {
       max: 5,
@@ -35,7 +32,6 @@ const getSequelize = () => {
       acquire: 60000,
       idle: 10000
     },
-    // Force agar Sequelize tidak mencoba fitur yang tidak didukung Pooler
     keepDefaultTimezone: true,
     benchmark: true
   });
@@ -47,23 +43,21 @@ const syncDatabase = async () => {
   try {
     const instance = getSequelize();
     
-    // 1. Tes koneksi dulu (Handshake)
-    console.log("📡 Attempting to shake hands with Supabase...");
+    console.log("📡 Mencoba 'Handshake' dengan Supabase...");
     await instance.authenticate();
-    console.log("✅ Connection to Supabase has been established successfully.");
+    console.log("✅ KONEKSI BERHASIL: Terhubung ke Supabase.");
     
-    // 2. Sinkronisasi tabel (CREATE TABLE IF NOT EXISTS)
-    console.log("🔄 Syncing database tables...");
+    console.log("🔄 Sinkronisasi Tabel (Syncing)...");
     await instance.sync({ alter: true });
-    console.log("✅ Database tables synced successfully");
+    console.log("✅ SEMUA TABEL SIAP: Database sinkron.");
     
     return instance;
   } catch (error) {
     console.error("❌ DATABASE CONNECTION ERROR:");
-    console.error(`Message: ${error.message}`);
+    console.error(`Pesan: ${error.message}`);
     
     if (error.message.includes("tenant")) {
-      console.error("💡 TIP: Check your DATABASE_URL in Railway. Make sure it has 'postgres.ajrubsqxqcnblxqjmjsg' as the user.");
+      console.error("💡 TIPS: Pastikan DATABASE_URL di Railway pakai port 6543 dan user 'postgres.ajrubsqxqcnblxqjmjsg'");
     }
     
     throw error;
