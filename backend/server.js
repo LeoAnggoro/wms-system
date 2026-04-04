@@ -3,7 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 // 1. Pastikan path ini benar! Jika file kamu namanya database.js, gunakan database
-const { syncDatabase } = require("./config/database"); 
+const { syncDatabase } = require("./config/db"); 
 
 const app = express();
 
