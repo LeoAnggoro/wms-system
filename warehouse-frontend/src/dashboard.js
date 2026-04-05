@@ -72,20 +72,20 @@ const Dashboard = () => {
     console.log('Token:', initialToken ? 'ADA' : 'TIDAK ADA');
     console.log('User:', initialUser ? 'ADA' : 'TIDAK ADA');
     
-    // VALIDASI SANGAT KETAT: Jika tidak ada token ATAU tidak ada user data, LANGSUNG redirect ke login
-    if (!initialToken || !initialUser || initialToken === '' || initialToken === 'undefined' || initialToken === 'null') {
-      console.warn('⛔ Token atau user data tidak valid, redirect ke login');
+    // Jika tidak ada token, redirect ke login
+    if (!initialToken || initialToken === '' || initialToken === 'undefined' || initialToken === 'null') {
+      console.warn('⛔ Token tidak valid, redirect ke login');
       console.warn('⛔ Token value:', initialToken);
-      console.warn('⛔ User value:', initialUser);
       
-      // Bersihkan semua data yang mungkin corrupt
-      localStorage.clear();
+      // Bersihkan token yang corrupt
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       
       // Redirect ke login
       navigate('/login');
     } else {
-      console.log('✅ Token dan user data ada, melanjutkan fetch data');
-      // Token ada, tapi tetap perlu dicek validitasnya saat fetch
+      console.log('✅ Token ada, melanjutkan fetch data');
+      // Token ada, lanjutkan fetch data
       fetchData();
     }
   }, [navigate, fetchData]);

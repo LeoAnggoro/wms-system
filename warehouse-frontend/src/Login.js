@@ -60,7 +60,7 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     // VALIDASI AWAL: Pastikan email dan password tidak kosong
     if (!email || !password || email.trim() === '' || password.trim() === '') {
       alert('Login Gagal: Email dan password wajib diisi');
@@ -72,7 +72,7 @@ const Login = () => {
     try {
       console.log('🔄 Mengirim request login ke server...');
       console.log('📧 Email:', email.trim());
-      
+
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email: email.trim(),
         password: password
@@ -82,31 +82,26 @@ const Login = () => {
       console.log('📡 Response status:', response.status);
       console.log('📡 Response data:', response.data);
 
-      // VALIDASI SANGAT KETAT: 
-      // 1. Response status HARUS 200
-      // 2. Response data HARUS ada
-      // 3. Token HARUS ada dan tidak kosong
-      // 4. User data HARUS ada
-      if (response.status === 200 && 
-          response.data && 
-          response.data.token && 
-          response.data.token !== '' &&
-          response.data.user) {
-        
-        // LOGIN BERHASIL - simpan token dan user
+      // LOGIN BERHASIL - simpan token dan user jika ada
+      if (response.data && response.data.token) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Simpan user data jika ada (tidak wajib)
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
         console.log('✅ Login berhasil, token disimpan');
         console.log('✅ User:', response.data.user);
-        
+
         // Redirect ke dashboard
         navigate('/dashboard');
       } else {
-        // Response dari server TIDAK sesuai format yang diharapkan
-        console.error('❌ Response server tidak valid');
+        // Response tidak memiliki token
+        console.error('❌ Response server tidak valid - tidak ada token');
         console.error('❌ Response data:', response.data);
         alert('Login Gagal: Email atau password salah');
-        
+
         // PASTIKAN tidak ada data yang tersimpan
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -118,9 +113,9 @@ const Login = () => {
       console.error('❌ Error response:', err.response);
       console.error('❌ Error status:', err.response?.status);
       console.error('❌ Error data:', err.response?.data);
-      
+
       let pesanError = 'Email atau password salah';
-      
+
       // Cek apakah ada pesan error spesifik dari server
       if (err.response?.data?.error) {
         pesanError = err.response.data.error;
@@ -135,13 +130,13 @@ const Login = () => {
         pesanError = 'Tidak bisa terhubung ke server';
         console.log('⚠️ Tidak ada response dari server');
       }
-      
+
       alert('Login Gagal: ' + pesanError);
-      
+
       // PASTIKAN hapus semua data jika error
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
+
     } finally {
       setLoading(false);
     }
