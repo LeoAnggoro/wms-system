@@ -1,14 +1,14 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
-  const token = req.header("Authorization")?.split(" ")[1]; // Ambil token dari header
-  if (!token) return res.status(401).json("Akses ditolak");
+  const token = req.header('Authorization')?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Access Denied' });
 
   try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified; // Di sini req.user diisi data dari token
+    const verified = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+    req.user = verified;
     next();
   } catch (err) {
-    res.status(400).json("Token tidak valid");
+    res.status(400).json({ error: 'Invalid Token' });
   }
 };
