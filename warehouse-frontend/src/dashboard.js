@@ -20,24 +20,29 @@ const Dashboard = () => {
   }, [navigate]);
 
   // Fungsi Fetch Data Utama
-  const fetchData = useCallback(async () => {
-    const currentToken = localStorage.getItem('token'); // Ambil token terbaru
-    console.log("--- Memulai Fetch Data ---");
+ const fetchData = useCallback(async () => {
+    // Ambil token langsung dari storage setiap kali fungsi dijalankan
+    const currentToken = localStorage.getItem('token');
+    
+    console.log("--- DEBUG FETCH ---");
+    console.log("Domain saat ini:", window.location.origin);
+    console.log("Token yang terbaca:", currentToken ? "Ada (Mulai Fetch...)" : "KOSONG/NULL");
 
     if (!currentToken) {
-      handleLogout();
+      console.warn("Fetch dibatalkan karena token tidak ditemukan di localStorage.");
+      // Jika ingin otomatis ke login kalau token hilang:
+      // navigate('/login'); 
       return;
     }
 
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/items`, {
-        headers: {
+        headers: { 
           Authorization: `Bearer ${currentToken}`,
           'Accept': 'application/json'
         }
       });
-
       let finalData = [];
       if (Array.isArray(res.data)) {
         finalData = res.data;
