@@ -122,7 +122,6 @@ const Dashboard = () => {
         headers: {
           Authorization: `Bearer ${currentToken}`,
           'Content-Type': 'multipart/form-data'
-          //'Content-Type': 'multipart/form-data'
         }
       };
 
