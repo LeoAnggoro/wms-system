@@ -1,7 +1,7 @@
 const Item = require("../models/Item");
 const User = require("../models/user");
 
-// 1. TAMBAH BARANG (DENGAN UPLOAD GAMBAR)
+//TAMBAH BARANG (DENGAN UPLOAD GAMBAR)
 exports.createItem = async (req, res) => {
   try {
     if (!req.user) {
@@ -25,7 +25,7 @@ exports.createItem = async (req, res) => {
   }
 };
 
-// 2. AMBIL SEMUA BARANG
+//AMBIL SEMUA BARANG
 exports.getItems = async (req, res) => {
   try {
     const items = await Item.findAll({
@@ -44,7 +44,7 @@ exports.getItems = async (req, res) => {
   }
 };
 
-// 3. UPDATE DATA BARANG
+// UPDATE DATA BARANG
 exports.updateItem = async (req, res) => {
   try {
     const { id } = req.params;
@@ -72,7 +72,7 @@ exports.updateItem = async (req, res) => {
   }
 };
 
-// 4. HAPUS DATA BARANG
+//HAPUS DATA BARANG
 exports.deleteItem = async (req, res) => {
   try {
     const { id } = req.params;

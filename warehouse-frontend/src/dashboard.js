@@ -160,7 +160,7 @@ const Dashboard = () => {
       {/* Form Card */}
       <div className={`card mb-4 border-${editId ? 'warning' : 'primary shadow-sm'}`}>
         <div className="card-body">
-          <h5 className="card-title">{editId ? '📝 Edit Barang' : '➕ Tambah Barang Baru'}</h5>
+          <h5 className="card-title">{editId ? ' Edit Barang' : ' Tambah Barang Baru'}</h5>
           <form onSubmit={handleSubmit} className="row g-3">
             <div className="col-md-3">
               <label className="form-label">Nama Barang</label>

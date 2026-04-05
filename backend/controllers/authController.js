@@ -7,21 +7,21 @@ const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // ✅ Validasi input
+    //Validasi input
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Semua field wajib diisi" });
     }
 
-    // ✅ Cek email sudah ada
+    //Cek email sudah ada
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ error: "Email sudah terdaftar" });
     }
 
-    // ✅ Hash password
+    // Hash password
     const hashed = await bcrypt.hash(password, 10);
 
-    // ✅ Simpan user
+    // Simpan user
     const user = await User.create({
       name,
       email,
@@ -29,7 +29,7 @@ const register = async (req, res) => {
       role: "staff" // default role
     });
 
-    // ❌ JANGAN kirim password
+    //  JANGAN kirim password
     res.status(201).json({
       message: "User berhasil dibuat",
       user: {
@@ -51,7 +51,7 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // ✅ Validasi input
+    //  Validasi input
     if (!email || !password) {
       return res.status(400).json({ error: "Email & password wajib diisi" });
     }
@@ -62,13 +62,13 @@ const login = async (req, res) => {
       return res.status(404).json({ error: "User tidak ditemukan" });
     }
 
-    // ✅ Cek password
+    // Cek password
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return res.status(400).json({ error: "Password salah" });
     }
 
-    // ✅ Generate JWT
+    //  Generate JWT
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET || "SECRET",

@@ -43,17 +43,17 @@ const syncDatabase = async () => {
   try {
     const instance = getSequelize();
     
-    console.log("📡 Mencoba 'Handshake' dengan Supabase...");
+    console.log(" Mencoba 'menghubungkan' dengan Supabase...");
     await instance.authenticate();
-    console.log("✅ KONEKSI BERHASIL: Terhubung ke Supabase.");
+    console.log(" KONEKSI BERHASIL: Terhubung ke Supabase.");
     
     console.log("🔄 Sinkronisasi Tabel (Syncing)...");
     await instance.sync({ alter: true });
-    console.log("✅ SEMUA TABEL SIAP: Database sinkron.");
+    console.log("SEMUA TABEL SIAP: Database sinkron.");
     
     return instance;
   } catch (error) {
-    console.error("❌ DATABASE CONNECTION ERROR:");
+    console.error(" DATABASE CONNECTION ERROR:");
     console.error(`Pesan: ${error.message}`);
     
     if (error.message.includes("tenant")) {
