@@ -12,7 +12,7 @@ const Dashboard = () => {
   const token = localStorage.getItem('token');
 
   
-  const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-f450.up.railway.app';
+  const API_URL = process.env.REACT_APP_API_URL || 'wms-system-production-6dbe.up.railway.app';
 
   useEffect(() => {
     if (!token) {
