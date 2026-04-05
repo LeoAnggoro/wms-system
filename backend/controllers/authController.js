@@ -59,13 +59,13 @@ const login = async (req, res) => {
     // ✅ Cari user
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ error: "User tidak ditemukan" });
+      return res.status(401).json({ error: "Email atau password salah" });
     }
 
     // Cek password
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      return res.status(400).json({ error: "Password salah" });
+      return res.status(401).json({ error: "Email atau password salah" });
     }
 
     //  Generate JWT
