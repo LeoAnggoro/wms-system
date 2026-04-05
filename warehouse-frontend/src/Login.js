@@ -55,88 +55,50 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // MENGAMBIL URL DARI ENV RAILWAY
-  const API_URL = (process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app').replace(/\/$/, "");
+  // PERBAIKAN: Hanya gunakan satu deklarasi API_URL yang fleksibel
+  const API_URL = (process.env.REACT_APP_API_URL || window.location.origin).replace(/\/$/, "");
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // VALIDASI AWAL: Pastikan email dan password tidak kosong
-    if (!email || !password || email.trim() === '' || password.trim() === '') {
-      alert('Login Gagal: Email dan password wajib diisi');
+    // 1. Bersihkan sesi lama setiap kali tombol login diklik
+    localStorage.clear(); 
+
+    if (!email || !password) {
+      alert('Email dan password wajib diisi');
       return;
     }
 
     setLoading(true);
 
     try {
-      console.log('🔄 Mengirim request login ke server...');
-      console.log('📧 Email:', email.trim());
-
+      // 2. Kirim request dengan trim pada email
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email: email.trim(),
         password: password
       });
 
-      console.log('📡 Response dari server:', response);
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response data:', response.data);
-
-      // LOGIN BERHASIL - simpan token dan user jika ada
+      // 3. Validasi Token
       if (response.data && response.data.token) {
         localStorage.setItem('token', response.data.token);
         
-        // Simpan user data jika ada (tidak wajib)
         if (response.data.user) {
           localStorage.setItem('user', JSON.stringify(response.data.user));
         }
-        
-        console.log('✅ Login berhasil, token disimpan');
-        console.log('✅ User:', response.data.user);
 
-        // Redirect ke dashboard
+        console.log('✅ Login berhasil');
         navigate('/dashboard');
       } else {
-        // Response tidak memiliki token
-        console.error('❌ Response server tidak valid - tidak ada token');
-        console.error('❌ Response data:', response.data);
-        alert('Login Gagal: Email atau password salah');
-
-        // PASTIKAN tidak ada data yang tersimpan
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        alert('Login Gagal: Server tidak mengirimkan akses');
       }
+
     } catch (err) {
-      // ERROR HANDLING: Tangkap SEMUA error dari server
-      console.error('❌ LOGIN ERROR - Detail lengkap:');
-      console.error('❌ Error object:', err);
-      console.error('❌ Error response:', err.response);
-      console.error('❌ Error status:', err.response?.status);
-      console.error('❌ Error data:', err.response?.data);
-
-      let pesanError = 'Email atau password salah';
-
-      // Cek apakah ada pesan error spesifik dari server
-      if (err.response?.data?.error) {
-        pesanError = err.response.data.error;
-        console.log('⚠️ Error message dari server:', pesanError);
-      } else if (err.response?.status === 401) {
-        pesanError = 'Email atau password salah';
-        console.log('⚠️ Status 401 - Unauthorized');
-      } else if (err.response?.status === 400) {
-        pesanError = err.response.data?.error || 'Data tidak valid';
-        console.log('⚠️ Status 400 - Bad Request');
-      } else if (!err.response) {
-        pesanError = 'Tidak bisa terhubung ke server';
-        console.log('⚠️ Tidak ada response dari server');
-      }
-
-      alert('Login Gagal: ' + pesanError);
-
-      // PASTIKAN hapus semua data jika error
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
+      // 4. Tangkap error detail (401, 404, atau 500)
+      console.error('Login Error:', err.response?.data);
+      const pesan = err.response?.data?.error || 'Email atau password salah';
+      alert('Login Gagal: ' + pesan);
+      
+      localStorage.clear(); // Pastikan bersih jika gagal
     } finally {
       setLoading(false);
     }
@@ -161,7 +123,6 @@ const Login = () => {
                 <input
                   type="email"
                   id="email"
-                  name="email"
                   className="form-control form-control-lg border-0 shadow-sm"
                   placeholder="name@company.com"
                   style={styles.input}
@@ -176,7 +137,6 @@ const Login = () => {
                 <input
                   type="password"
                   id="password"
-                  name="password"
                   className="form-control form-control-lg border-0 shadow-sm"
                   placeholder="••••••••"
                   style={styles.input}
@@ -194,9 +154,11 @@ const Login = () => {
                   disabled={loading}
                 >
                   {loading ? (
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                  ) : null}
-                  {loading ? 'Authenticating...' : 'Login Sekarang'}
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2"></span>
+                      Authenticating...
+                    </>
+                  ) : 'Login Sekarang'}
                 </button>
               </div>
             </form>
