@@ -7,11 +7,13 @@ const Dashboard = () => {
   const [formData, setFormData] = useState({ name: '', category: '', estimatedValue: '' });
   const [imageFile, setImageFile] = useState(null);
   const [editId, setEditId] = useState(null); 
+  const [loading, setLoading] = useState(true); // Tambahkan state loading
   
   const navigate = useNavigate(); 
   const token = localStorage.getItem('token');
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app';
+  // Pastikan URL diakhiri tanpa slash untuk konsistensi
+  const API_URL = (process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app').replace(/\/$/, "");
 
   useEffect(() => {
     if (!token) {
@@ -27,27 +29,34 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-
 
   const fetchData = useCallback(async () => {
     if (!token) return;
+    setLoading(true);
     try {
       console.log("Memanggil API ke:", `${API_URL}/api/items`);
       const res = await axios.get(`${API_URL}/api/items`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      console.log("Raw Response dari API:", res.data);
+      console.log("Raw Response:", res.data);
 
+      // Logika pembersihan data agar selalu array
       let finalData = [];
       if (Array.isArray(res.data)) {
         finalData = res.data;
-      } else if (res.data && Array.isArray(res.data.data)) {
+      } else if (res.data?.data && Array.isArray(res.data.data)) {
         finalData = res.data.data;
-      } else if (res.data && Array.isArray(res.data.items)) {
+      } else if (res.data?.items && Array.isArray(res.data.items)) {
         finalData = res.data.items;
       }
 
       setItems(finalData);
     } catch (err) {
       console.error("Gagal mengambil data:", err);
-      setItems([]); 
+      // Jika error 401 (Unauthorized), paksa login ulang
+      if (err.response?.status === 401) {
+        handleLogout();
+      }
+    } finally {
+      setLoading(false);
     }
   }, [token, API_URL]);
 
@@ -63,7 +72,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-
     setImageFile(e.target.files[0]);
   };
 
-  // Fungsi didefinisikan sebelum return agar tidak error 'not defined'
   const startEdit = (item) => {
     setEditId(item.id);
     setFormData({ 
@@ -117,7 +125,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-
       setImageFile(null);
       if (document.getElementById('fileInput')) document.getElementById('fileInput').value = ""; 
       
-      setTimeout(() => fetchData(), 500);
+      fetchData();
     } catch (err) {
       alert("Gagal memproses data: " + (err.response?.data?.error || "Error Server"));
     }
@@ -127,7 +135,10 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>📦 WMS Inventory</h2>
-        <button className="btn btn-danger btn-sm" onClick={handleLogout}>Logout</button>
+        <div className="d-flex align-items-center">
+          <span className="me-3 badge bg-success">Online</span>
+          <button className="btn btn-danger btn-sm" onClick={handleLogout}>Logout</button>
+        </div>
       </div>
 
       <div className={`card mb-4 border-${editId ? 'warning' : 'primary shadow-sm'}`}>
@@ -171,7 +182,9 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-
             </tr>
           </thead>
           <tbody>
-            {items.length > 0 ? (
+            {loading ? (
+              <tr><td colSpan="5" className="text-center">Memuat data dari Supabase...</td></tr>
+            ) : items.length > 0 ? (
               items.map((item) => (
                 <tr key={item.id}>
                   <td>
@@ -180,11 +193,12 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-
                         src={`${API_URL}/uploads/${item.image}`} 
                         alt={item.name} 
                         style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
+                        onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Img'}
                       />
                     ) : "No Image"}
                   </td>
                   <td className="fw-bold">{item.name}</td>
-                  <td>{item.category}</td>
+                  <td><span className="badge bg-light text-dark">{item.category}</span></td>
                   <td>Rp {Number(item.estimatedValue).toLocaleString('id-ID')}</td>
                   <td className="text-center">
                     <button onClick={() => startEdit(item)} className="btn btn-sm btn-outline-warning me-2">Edit</button>
@@ -193,7 +207,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="5" className="text-center">Belum ada data barang.</td></tr>
+              <tr><td colSpan="5" className="text-center py-4 text-muted">Belum ada data barang. Silakan tambah barang baru.</td></tr>
             )}
           </tbody>
         </table>
