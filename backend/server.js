@@ -1,17 +1,16 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-
-// 1. Sinkronisasi Database
 const { syncDatabase } = require("./config/db"); 
 
 const app = express();
 
+// Middleware
 app.use(cors()); 
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// Root route
+// 1. Root route (Cek ini di browser untuk pastikan server online)
 app.get('/', (req, res) => {
   res.json({ 
     message: "VERSI TERBARU: Server Aktif", 
@@ -22,30 +21,26 @@ app.get('/', (req, res) => {
 console.log("-----------------------------------------");
 console.log("🛠️  MEMULAI PROSES REGISTER ROUTE...");
 
-// ... kode sebelumnya ...
-
+// 2. Register Routes
 try {
   const authRoutes = require("./routes/authRoutes");
+  const itemRoutes = require("./routes/itemRoutes");
+
   app.use("/api/auth", authRoutes);
   console.log("✅ Rute /api/auth BERHASIL dimuat");
 
-  // Tambahkan pengecekan ini
-  const itemRoutes = require("./routes/itemRoutes");
-  if (itemRoutes) {
-    app.use("/api/items", itemRoutes);
-    console.log("✅ Rute /api/items BERHASIL dimuat");
-  } else {
-    console.error("❌ File itemRoutes ditemukan tapi isinya kosong!");
-  }
+  app.use("/api/items", itemRoutes);
+  console.log("✅ Rute /api/items BERHASIL dimuat");
 
 } catch (err) {
-  console.error("❌ GAGAL memuat rute:", err.message);
-  // Ini penting: Jika file tidak ada, server akan kasih tahu di log Railway
+  console.error("❌ GAGAL memuat rute. Cek folder 'routes' dan nama file!");
+  console.error("Error Detail:", err.message);
 }
 
-Fungsi Start Server
+// 3. Fungsi Start Server
 const startServer = async () => {
-  const PORT = process.env.PORT || 5000;
+  // Railway menggunakan variabel PORT secara dinamis
+  const PORT = process.env.PORT || 5000; 
   
   try {
     console.log("📡 Sedang mencoba koneksi ke Supabase...");
