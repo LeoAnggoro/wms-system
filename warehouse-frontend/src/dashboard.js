@@ -31,7 +31,7 @@ const Dashboard = () => {
     if (!token) return;
     setLoading(true);
     try {
-      console.log("Memanggil API ke:", `${API_URL}/api/items`);
+      console.log("Memanggil API ke:", `${API_URL}`);
       const res = await axios.get(`${API_URL}/api/items`, {
         headers: { Authorization: `Bearer ${token}` }
       });
