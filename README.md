@@ -34,7 +34,7 @@ Sistem Manajemen Inventaris Gudang (Fullstack JavaScript) yang dibangun untuk me
 
  [ Berikut adalah link CV, Portofolio, dan Video Demo Aplikasi](https://drive.google.com/drive/folders/1rfJO0OnRNZDOiNbJgl-gxpGZ6lJrUu9o)
  
- [Akses aplikasi di sini](wms-system-production-f450.up.railway.app)
+ [Akses aplikasi di sini](https://wms-system-production-f450.up.railway.app/login)
 
 *Video mencakup: Proses Login, Dashboard Ringkasan, dan Manajemen Stok Barang.*
 
