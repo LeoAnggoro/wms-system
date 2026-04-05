@@ -66,26 +66,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     const initialToken = localStorage.getItem('token');
-    const initialUser = localStorage.getItem('user');
-    
-    console.log('=== DASHBOARD MOUNT CHECK ===');
-    console.log('Token:', initialToken ? 'ADA' : 'TIDAK ADA');
-    console.log('User:', initialUser ? 'ADA' : 'TIDAK ADA');
-    
-    // Jika tidak ada token, redirect ke login
-    if (!initialToken || initialToken === '' || initialToken === 'undefined' || initialToken === 'null') {
-      console.warn('⛔ Token tidak valid, redirect ke login');
-      console.warn('⛔ Token value:', initialToken);
-      
-      // Bersihkan token yang corrupt
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Redirect ke login
-      navigate('/login');
+    if (!initialToken) {
+    navigate('/login');
     } else {
-      console.log('✅ Token ada, melanjutkan fetch data');
-      // Token ada, lanjutkan fetch data
       fetchData();
     }
   }, [navigate, fetchData]);

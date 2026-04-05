@@ -55,14 +55,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // PERBAIKAN: Hanya gunakan satu deklarasi API_URL yang fleksibel
+  // URL API dinamis (menggunakan origin jika env tidak ada)
   const API_URL = (process.env.REACT_APP_API_URL || window.location.origin).replace(/\/$/, "");
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
-    // 1. Bersihkan sesi lama setiap kali tombol login diklik
-    localStorage.clear(); 
+    
+    // Reset session lama
+    localStorage.clear();
 
     if (!email || !password) {
       alert('Email dan password wajib diisi');
@@ -72,13 +72,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 2. Kirim request dengan trim pada email
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email: email.trim(),
-        password: password
+        password: password,
       });
 
-      // 3. Validasi Token
+      // Simpan token dan data user jika login berhasil
       if (response.data && response.data.token) {
         localStorage.setItem('token', response.data.token);
         
@@ -89,16 +88,13 @@ const Login = () => {
         console.log('✅ Login berhasil');
         navigate('/dashboard');
       } else {
-        alert('Login Gagal: Server tidak mengirimkan akses');
+        alert('Login Gagal: Server tidak mengirimkan token akses');
       }
-
     } catch (err) {
-      // 4. Tangkap error detail (401, 404, atau 500)
-      console.error('Login Error:', err.response?.data);
-      const pesan = err.response?.data?.error || 'Email atau password salah';
-      alert('Login Gagal: ' + pesan);
-      
-      localStorage.clear(); // Pastikan bersih jika gagal
+      console.error('❌ Login error:', err.response?.data);
+      const pesanError = err.response?.data?.error || "Email atau password salah!";
+      alert("Login Gagal: " + pesanError);
+      localStorage.clear();
     } finally {
       setLoading(false);
     }
