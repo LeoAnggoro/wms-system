@@ -69,22 +69,45 @@ const login = async (req, res) => {
     }
 
     //  Generate JWT
+    // 1. Pastikan library jwt sudah di-import di paling atas file!
+const jwt = require('jsonwebtoken'); 
+
+// ... di dalam fungsi login ...
+
+try {
+    // 2. Pastikan variabel user benar-benar ditemukan sebelum membuat token
+    if (!user) {
+        return res.status(401).json({ error: "User tidak ditemukan" });
+    }
+
+    // 3. LOGIKA TOKEN
+    // CATATAN: MongoDB menggunakan _id (pakai underscore), bukan id. 
+    // Jika kamu pakai MySQL/Sequelize baru pakai user.id.
+    const userId = user._id || user.id; 
+
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      { id: userId, role: user.role },
       process.env.JWT_SECRET || "SECRET",
       { expiresIn: "1d" }
     );
 
-    res.json({
+    // 4. KIRIM RESPONSE
+    // Pastikan 'token' tertulis jelas di sini agar Frontend bisa membacanya
+    return res.status(200).json({
       message: "Login berhasil",
-      token,
+      token: token, 
       user: {
-        id: user.id,
+        id: userId,
         name: user.name,
         email: user.email,
         role: user.role
       }
     });
+
+} catch (error) {
+    console.error("JWT Error:", error);
+    return res.status(500).json({ error: "Gagal membuat sesi login" });
+}
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
