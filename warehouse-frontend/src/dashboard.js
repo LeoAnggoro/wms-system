@@ -27,11 +27,26 @@ const Dashboard = () => {
   const fetchData = useCallback(async () => {
     if (!token) return;
     try {
+      console.log("Memanggil API ke:", `${API_URL}/api/items`);
       const res = await axios.get(`${API_URL}/api/items`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const dataItems = Array.isArray(res.data) ? res.data : (res.data.items || []);
-      setItems(dataItems);
+      
+      console.log("Raw Response dari API:", res.data);
+
+      // --- LOGIKA PENYARINGAN DATA (AGAR TABEL TIDAK KOSONG) ---
+      let finalData = [];
+      if (Array.isArray(res.data)) {
+        finalData = res.data;
+      } else if (res.data && Array.isArray(res.data.data)) {
+        finalData = res.data.data;
+      } else if (res.data && Array.isArray(res.data.items)) {
+        finalData = res.data.items;
+      }
+
+      console.log("Data yang akan di-set ke state:", finalData);
+      setItems(finalData);
+      
     } catch (err) {
       console.error("Gagal mengambil data:", err);
       setItems([]); 
@@ -50,18 +65,16 @@ const Dashboard = () => {
     setImageFile(e.target.files[0]);
   };
 
-  // --- FUNGSI START EDIT (DIBUTUHKAN UNTUK BUILD) ---
   const startEdit = (item) => {
     setEditId(item.id);
     setFormData({ 
-      name: item.name, 
-      category: item.category, 
-      estimatedValue: item.estimatedValue 
+      name: item.name || '', 
+      category: item.category || '', 
+      estimatedValue: item.estimatedValue || '' 
     });
     window.scrollTo(0, 0);
   };
 
-  // --- FUNGSI HANDLE DELETE (DIBUTUHKAN UNTUK BUILD) ---
   const handleDelete = async (id) => {
     if (window.confirm("Yakin ingin menghapus barang ini?")) {
       try {
@@ -97,7 +110,8 @@ const Dashboard = () => {
         alert("Data berhasil diupdate!");
         setEditId(null);
       } else {
-        await axios.post(`${API_URL}/api/items`, data, config);
+        const res = await axios.post(`${API_URL}/api/items`, data, config);
+        console.log("Hasil Post:", res.data);
         alert("Data berhasil ditambah!");
       }
 
@@ -105,7 +119,10 @@ const Dashboard = () => {
       setImageFile(null);
       const fileInput = document.getElementById('fileInput');
       if (fileInput) fileInput.value = ""; 
-      fetchData();
+      
+      // PENTING: Tunggu sebentar sebelum fetch agar Supabase sempat memproses
+      setTimeout(() => fetchData(), 500);
+
     } catch (err) {
       alert("Gagal memproses data: " + (err.response?.data?.error || "Error Server"));
     }
@@ -159,7 +176,7 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {Array.isArray(items) && items.length > 0 ? (
+            {items && items.length > 0 ? (
               items.map((item) => (
                 <tr key={item?.id || Math.random()}>
                   <td>
@@ -176,7 +193,7 @@ const Dashboard = () => {
                   </td>
                   <td className="fw-bold">{item?.name || 'Unknown'}</td>
                   <td><span className="badge bg-info text-dark">{item?.category || 'Umum'}</span></td>
-                  <td>Rp {Number(item?.estimatedValue || 0).toLocaleString()}</td>
+                  <td>Rp {Number(item?.estimatedValue || 0).toLocaleString('id-ID')}</td>
                   <td className="text-center">
                     <button onClick={() => startEdit(item)} className="btn btn-sm btn-outline-warning me-2">Edit</button>
                     <button onClick={() => handleDelete(item?.id)} className="btn btn-sm btn-outline-danger">Hapus</button>
