@@ -68,7 +68,7 @@ const Login = () => {
         password
       });
 
-      localStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('token', response.data.token);
       navigate('/dashboard'); 
     } catch (err) {
       const pesanError = err.response?.data?.error || "Koneksi ke server gagal!";

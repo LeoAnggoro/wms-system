@@ -15,14 +15,13 @@ const Dashboard = () => {
   const API_URL = 'https://wms-system-production-6dbe.up.railway.app';
 
   const handleLogout = useCallback(() => {
-    localStorage.clear();
     sessionStorage.clear();
     navigate('/login');
   }, [navigate]);
 
   // Fungsi Fetch Data Utama
   const fetchData = useCallback(async () => {
-    const currentToken = localStorage.getItem('token'); // Ambil token terbaru
+    const currentToken = sessionStorage.getItem('token'); // Ambil token terbaru
     console.log("--- Memulai Fetch Data ---");
 
     if (!currentToken) {
@@ -61,7 +60,7 @@ const Dashboard = () => {
   }, [handleLogout]);
 
   useEffect(() => {
-    const initialToken = localStorage.getItem('token');
+    const initialToken = sessionStorage.getItem('token');
     if (!initialToken) {
       navigate('/login');
     } else {
@@ -88,7 +87,7 @@ const Dashboard = () => {
   };
 
   const handleDelete = async (id) => {
-    const currentToken = localStorage.getItem('token');
+    const currentToken = sessionStorage.getItem('token');
     if (window.confirm("Yakin ingin menghapus barang ini?")) {
       try {
         await axios.delete(`${API_URL}/api/items/${id}`, {
@@ -105,7 +104,7 @@ const Dashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const currentToken = localStorage.getItem('token'); // Pastikan token fresh
+    const currentToken = sessionStorage.getItem('token'); // Pastikan token fresh
     
     try {
       const data = new FormData();
