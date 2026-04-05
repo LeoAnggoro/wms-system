@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient'; // Pastikan file client sudah benar
+import { supabase } from './supabaseClient';
 
 const styles = {
   // ... (Gunakan styles yang sudah kamu buat, sudah sangat bagus!)
