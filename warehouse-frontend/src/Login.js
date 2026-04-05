@@ -55,24 +55,93 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // MENGAMBIL URL DARI ENV RAILWAY (Penting agar tidak gagal koneksi)
+  // MENGAMBIL URL DARI ENV RAILWAY
   const API_URL = (process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app').replace(/\/$/, "");
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
     
+    // VALIDASI AWAL: Pastikan email dan password tidak kosong
+    if (!email || !password || email.trim() === '' || password.trim() === '') {
+      alert('Login Gagal: Email dan password wajib diisi');
+      return;
+    }
+
+    setLoading(true);
+
     try {
+      console.log('🔄 Mengirim request login ke server...');
+      console.log('📧 Email:', email.trim());
+      
       const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password
+        email: email.trim(),
+        password: password
       });
 
-      localStorage.setItem('token', response.data.token);
-      navigate('/dashboard'); 
+      console.log('📡 Response dari server:', response);
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response data:', response.data);
+
+      // VALIDASI SANGAT KETAT: 
+      // 1. Response status HARUS 200
+      // 2. Response data HARUS ada
+      // 3. Token HARUS ada dan tidak kosong
+      // 4. User data HARUS ada
+      if (response.status === 200 && 
+          response.data && 
+          response.data.token && 
+          response.data.token !== '' &&
+          response.data.user) {
+        
+        // LOGIN BERHASIL - simpan token dan user
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        console.log('✅ Login berhasil, token disimpan');
+        console.log('✅ User:', response.data.user);
+        
+        // Redirect ke dashboard
+        navigate('/dashboard');
+      } else {
+        // Response dari server TIDAK sesuai format yang diharapkan
+        console.error('❌ Response server tidak valid');
+        console.error('❌ Response data:', response.data);
+        alert('Login Gagal: Email atau password salah');
+        
+        // PASTIKAN tidak ada data yang tersimpan
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     } catch (err) {
-      const pesanError = err.response?.data?.error || "Koneksi ke server gagal!";
-      alert("Login Gagal: " + pesanError);
+      // ERROR HANDLING: Tangkap SEMUA error dari server
+      console.error('❌ LOGIN ERROR - Detail lengkap:');
+      console.error('❌ Error object:', err);
+      console.error('❌ Error response:', err.response);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error data:', err.response?.data);
+      
+      let pesanError = 'Email atau password salah';
+      
+      // Cek apakah ada pesan error spesifik dari server
+      if (err.response?.data?.error) {
+        pesanError = err.response.data.error;
+        console.log('⚠️ Error message dari server:', pesanError);
+      } else if (err.response?.status === 401) {
+        pesanError = 'Email atau password salah';
+        console.log('⚠️ Status 401 - Unauthorized');
+      } else if (err.response?.status === 400) {
+        pesanError = err.response.data?.error || 'Data tidak valid';
+        console.log('⚠️ Status 400 - Bad Request');
+      } else if (!err.response) {
+        pesanError = 'Tidak bisa terhubung ke server';
+        console.log('⚠️ Tidak ada response dari server');
+      }
+      
+      alert('Login Gagal: ' + pesanError);
+      
+      // PASTIKAN hapus semua data jika error
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
     } finally {
       setLoading(false);
     }
@@ -90,44 +159,42 @@ const Login = () => {
               <h2 className="fw-bold text-primary">WMS Login</h2>
               <p className="text-muted small">Warehouse Management System</p>
             </div>
-            
+
             <form onSubmit={handleLogin}>
-              {/* Grup Email Address - Diperbaiki dengan htmlFor, id, dan name */}
               <div style={styles.inputGroup}>
                 <label htmlFor="email" className="form-label small fw-bold text-secondary">Email Address</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   id="email"
                   name="email"
                   className="form-control form-control-lg border-0 shadow-sm"
-                  placeholder="name@company.com" 
+                  placeholder="name@company.com"
                   style={styles.input}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required 
+                  required
                 />
               </div>
 
-              {/* Grup Password - Diperbaiki dengan htmlFor, id, dan name */}
               <div style={styles.inputGroup}>
                 <label htmlFor="password" className="form-label small fw-bold text-secondary">Password</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   id="password"
                   name="password"
                   className="form-control form-control-lg border-0 shadow-sm"
-                  placeholder="••••••••" 
+                  placeholder="••••••••"
                   style={styles.input}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required 
+                  required
                 />
               </div>
 
               <div className="d-grid gap-2 mt-4">
-                <button 
-                  type="submit" 
-                  className="btn btn-primary btn-lg shadow-sm" 
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-lg shadow-sm"
                   style={styles.button}
                   disabled={loading}
                 >
@@ -146,7 +213,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
