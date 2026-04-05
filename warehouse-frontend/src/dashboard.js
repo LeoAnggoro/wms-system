@@ -82,14 +82,31 @@ const Dashboard = () => {
       }
     }
   };
-
+  const handleInsert = async () => {
+    const { data, error } = await supabase
+    .from('Items')
+    .insert([
+      { 
+        nama_barang: nama, 
+        kategori: kategori, 
+        harga: harga,
+        // TAMBAHKAN BARIS DI BAWAH INI:
+        createdBy: user.id 
+      }
+    ]);
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // 1. Pastikan user terautentikasi
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("Sesi login tidak ditemukan.");
+
       let imageUrl = null;
 
+      // 2. Logika Upload Foto
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -108,27 +125,33 @@ const Dashboard = () => {
         imageUrl = publicUrlData.publicUrl;
       }
 
+      // 3. Susun Payload 
+      // PENTING: Jika di DB nama kolomnya adalah 'nama_barang', ganti 'name' jadi 'nama_barang'
       const payload = {
-        name: formData.name,
+        name: formData.name, 
         category: formData.category,
         estimatedValue: parseFloat(formData.estimatedValue),
+        createdBy: 1 // Sesuai tipe Integer di DB kamu (Gunakan ID user yang valid di tabel public.Users)
       };
 
       if (imageUrl) {
         payload.image_url = imageUrl;
       }
 
-      // 3. Insert & Update - Diubah ke 'Items'
+      // 4. Eksekusi
       if (editId) {
+        // UPDATE: Biasanya tidak butuh createdBy, tapi mengirimnya juga tidak masalah
         const { error } = await supabase.from('Items').update(payload).eq('id', editId);
         if (error) throw error;
         alert("Data berhasil diupdate!");
       } else {
+        // INSERT: Wajib ada createdBy karena constraint NOT NULL
         const { error } = await supabase.from('Items').insert([payload]);
         if (error) throw error;
         alert("Data berhasil ditambah!");
       }
 
+      // 5. Bersihkan Form
       setEditId(null);
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
@@ -136,6 +159,7 @@ const Dashboard = () => {
       
       fetchData();
     } catch (err) {
+      console.error("Detail Error:", err);
       alert("Gagal memproses data: " + err.message);
     } finally {
       setLoading(false);
