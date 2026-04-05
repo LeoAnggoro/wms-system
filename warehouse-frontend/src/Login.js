@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-// 1. Tentukan Object Styles DI LUAR Komponen (agar rapi dan tidak error)
 const styles = {
   container: {
     background: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
     minHeight: '100vh',
     display: 'flex',
-    alignItems: 'center',       // Menengah Vertikal
-    justifyContent: 'center',    // Menengah Horizontal
+    alignItems: 'center',
+    justifyContent: 'center',
     fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     padding: '20px'
   },
@@ -18,7 +17,7 @@ const styles = {
     background: 'rgba(255, 255, 255, 0.95)',
     backdropFilter: 'blur(10px)',
     width: '100%',
-    maxWidth: '400px',           // Membatasi lebar agar proporsional
+    maxWidth: '400px',
     boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
   },
   iconBox: {
@@ -29,10 +28,10 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: '0 auto 1.5rem auto' // Memberi jarak bawah agar tidak menempel
+    margin: '0 auto 1.5rem auto'
   },
   inputGroup: {
-    marginBottom: '1rem'         // Memberi jarak antar input group agar rapi
+    marginBottom: '1rem'
   },
   input: {
     backgroundColor: '#f3f6f9',
@@ -56,12 +55,16 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // MENGAMBIL URL DARI ENV RAILWAY (Penting agar tidak gagal koneksi)
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      // Menggunakan API_URL yang dinamis
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password
       });
@@ -79,7 +82,6 @@ const Login = () => {
   return (
     <div style={styles.container}>
       <div className="container animate-fade-in d-flex justify-content-center">
-        {/* Gunakan shadow-sm atau shadow-lg bawaan Bootstrap */}
         <div className="card shadow border-0" style={styles.card}>
           <div className="card-body p-5">
             <div className="text-center mb-4">
@@ -91,11 +93,13 @@ const Login = () => {
             </div>
             
             <form onSubmit={handleLogin}>
-              {/* Grup Email Address */}
+              {/* Grup Email Address - Diperbaiki dengan htmlFor, id, dan name */}
               <div style={styles.inputGroup}>
-                <label className="form-label small fw-bold text-secondary">Email Address</label>
+                <label htmlFor="email" className="form-label small fw-bold text-secondary">Email Address</label>
                 <input 
                   type="email" 
+                  id="email"
+                  name="email"
                   className="form-control form-control-lg border-0 shadow-sm"
                   placeholder="name@company.com" 
                   style={styles.input}
@@ -105,11 +109,13 @@ const Login = () => {
                 />
               </div>
 
-              {/* Grup Password */}
+              {/* Grup Password - Diperbaiki dengan htmlFor, id, dan name */}
               <div style={styles.inputGroup}>
-                <label className="form-label small fw-bold text-secondary">Password</label>
+                <label htmlFor="password" className="form-label small fw-bold text-secondary">Password</label>
                 <input 
                   type="password" 
+                  id="password"
+                  name="password"
                   className="form-control form-control-lg border-0 shadow-sm"
                   placeholder="••••••••" 
                   style={styles.input}
@@ -119,7 +125,6 @@ const Login = () => {
                 />
               </div>
 
-              {/* Tombol Login */}
               <div className="d-grid gap-2 mt-4">
                 <button 
                   type="submit" 
@@ -137,14 +142,12 @@ const Login = () => {
 
             <div className="text-center mt-4">
               <p className="small text-muted mb-0">Lupa password?</p>
-              {/* Pastikan style tombol link benar */}
               <button className="btn btn-link btn-sm text-decoration-none fw-bold shadow-none p-0">Hubungi Admin IT</button>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Animasi FadIn sederhana */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
@@ -153,7 +156,6 @@ const Login = () => {
         .animate-fade-in {
           animation: fadeIn 0.8s ease-out forwards;
         }
-        /* Efek hover tombol */
         .btn-primary:hover {
           transform: translateY(-2px);
           box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
