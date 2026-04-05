@@ -10,7 +10,9 @@ const Dashboard = () => {
   
   const navigate = useNavigate(); 
   const token = localStorage.getItem('token');
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  
+  const API_URL = process.env.REACT_APP_API_URL || 'https://wms-system-production-f450.up.railway.app';
 
   useEffect(() => {
     if (!token) {
@@ -34,7 +36,6 @@ const Dashboard = () => {
       
       console.log("Raw Response dari API:", res.data);
 
-      // --- LOGIKA PENYARINGAN DATA (AGAR TABEL TIDAK KOSONG) ---
       let finalData = [];
       if (Array.isArray(res.data)) {
         finalData = res.data;
@@ -44,9 +45,7 @@ const Dashboard = () => {
         finalData = res.data.items;
       }
 
-      console.log("Data yang akan di-set ke state:", finalData);
       setItems(finalData);
-      
     } catch (err) {
       console.error("Gagal mengambil data:", err);
       setItems([]); 
@@ -65,6 +64,7 @@ const Dashboard = () => {
     setImageFile(e.target.files[0]);
   };
 
+  // Fungsi didefinisikan sebelum return agar tidak error 'not defined'
   const startEdit = (item) => {
     setEditId(item.id);
     setFormData({ 
@@ -110,19 +110,15 @@ const Dashboard = () => {
         alert("Data berhasil diupdate!");
         setEditId(null);
       } else {
-        const res = await axios.post(`${API_URL}/api/items`, data, config);
-        console.log("Hasil Post:", res.data);
+        await axios.post(`${API_URL}/api/items`, data, config);
         alert("Data berhasil ditambah!");
       }
 
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
-      const fileInput = document.getElementById('fileInput');
-      if (fileInput) fileInput.value = ""; 
+      if (document.getElementById('fileInput')) document.getElementById('fileInput').value = ""; 
       
-      // PENTING: Tunggu sebentar sebelum fetch agar Supabase sempat memproses
       setTimeout(() => fetchData(), 500);
-
     } catch (err) {
       alert("Gagal memproses data: " + (err.response?.data?.error || "Error Server"));
     }
@@ -140,19 +136,19 @@ const Dashboard = () => {
           <h5 className="card-title">{editId ? '📝 Edit Barang' : '➕ Tambah Barang Baru'}</h5>
           <form onSubmit={handleSubmit} className="row g-3">
             <div className="col-md-3">
-              <label htmlFor="name" className="form-label">Nama Barang</label>
-              <input id="name" name="name" className="form-control" value={formData.name} onChange={handleChange} required />
+              <label className="form-label">Nama Barang</label>
+              <input name="name" className="form-control" value={formData.name} onChange={handleChange} required />
             </div>
             <div className="col-md-2">
-              <label htmlFor="category" className="form-label">Kategori</label>
-              <input id="category" name="category" className="form-control" value={formData.category} onChange={handleChange} required />
+              <label className="form-label">Kategori</label>
+              <input name="category" className="form-control" value={formData.category} onChange={handleChange} required />
             </div>
             <div className="col-md-2">
-              <label htmlFor="estimatedValue" className="form-label">Harga Estimasi</label>
-              <input id="estimatedValue" name="estimatedValue" type="number" className="form-control" value={formData.estimatedValue} onChange={handleChange} required />
+              <label className="form-label">Harga Estimasi</label>
+              <input name="estimatedValue" type="number" className="form-control" value={formData.estimatedValue} onChange={handleChange} required />
             </div>
             <div className="col-md-3">
-              <label htmlFor="fileInput" className="form-label">Foto Barang</label>
+              <label className="form-label">Foto Barang</label>
               <input id="fileInput" name="image" type="file" className="form-control" onChange={handleFileChange} accept="image/*" />
             </div>
             <div className="col-md-2 d-flex align-items-end">
@@ -176,32 +172,29 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {items && items.length > 0 ? (
+            {items.length > 0 ? (
               items.map((item) => (
-                <tr key={item?.id || Math.random()}>
+                <tr key={item.id}>
                   <td>
-                    {item?.image ? (
+                    {item.image ? (
                       <img 
                         src={`${API_URL}/uploads/${item.image}`} 
-                        alt={item?.name} 
+                        alt={item.name} 
                         style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/50?text=Error"; }}
                       />
-                    ) : (
-                      <div style={{ width: '50px', height: '50px', backgroundColor: '#eee', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>No Img</div>
-                    )}
+                    ) : "No Image"}
                   </td>
-                  <td className="fw-bold">{item?.name || 'Unknown'}</td>
-                  <td><span className="badge bg-info text-dark">{item?.category || 'Umum'}</span></td>
-                  <td>Rp {Number(item?.estimatedValue || 0).toLocaleString('id-ID')}</td>
+                  <td className="fw-bold">{item.name}</td>
+                  <td>{item.category}</td>
+                  <td>Rp {Number(item.estimatedValue).toLocaleString('id-ID')}</td>
                   <td className="text-center">
                     <button onClick={() => startEdit(item)} className="btn btn-sm btn-outline-warning me-2">Edit</button>
-                    <button onClick={() => handleDelete(item?.id)} className="btn btn-sm btn-outline-danger">Hapus</button>
+                    <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-outline-danger">Hapus</button>
                   </td>
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="5" className="text-center text-muted">Belum ada data barang.</td></tr>
+              <tr><td colSpan="5" className="text-center">Belum ada data barang.</td></tr>
             )}
           </tbody>
         </table>
