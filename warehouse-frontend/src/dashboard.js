@@ -11,7 +11,9 @@ const Dashboard = () => {
   const navigate = useNavigate(); 
   const token = localStorage.getItem('token');
 
- 
+  // 1. DEFINISIKAN API_URL DINAMIS
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -22,19 +24,20 @@ const Dashboard = () => {
     localStorage.removeItem('token'); 
     localStorage.clear();
     sessionStorage.clear();
-    navigate('/login'); // 
+    navigate('/login'); 
   };
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/items', {
+      // MENGGUNAKAN API_URL
+      const res = await axios.get(`${API_URL}/api/items`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setItems(res.data);
     } catch (err) {
       console.error("Gagal mengambil data:", err);
     }
-  }, [token]);
+  }, [token, API_URL]);
 
   useEffect(() => {
     fetchData();
@@ -45,13 +48,12 @@ const Dashboard = () => {
   };
 
   const handleFileChange = (e) => {
-    setImageFile(e.target.files[0]); // Ambil file dari input
+    setImageFile(e.target.files[0]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 1. Gunakan FormData karena kita mengirim file
       const data = new FormData();
       data.append('name', formData.name);
       data.append('category', formData.category);
@@ -66,15 +68,16 @@ const Dashboard = () => {
       };
 
       if (editId) {
-        await axios.put(`http://localhost:5000/api/items/${editId}`, data, config);
+        // MENGGUNAKAN API_URL
+        await axios.put(`${API_URL}/api/items/${editId}`, data, config);
         alert("Data berhasil diupdate!");
         setEditId(null);
       } else {
-        await axios.post('http://localhost:5000/api/items', data, config);
+        // MENGGUNAKAN API_URL
+        await axios.post(`${API_URL}/api/items`, data, config);
         alert("Data berhasil ditambah!");
       }
 
-      // Reset form
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
       document.getElementById('fileInput').value = ""; 
@@ -87,7 +90,8 @@ const Dashboard = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Yakin ingin menghapus barang ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/items/${id}`, {
+        // MENGGUNAKAN API_URL
+        await axios.delete(`${API_URL}/api/items/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert("Berhasil dihapus!");
@@ -116,20 +120,20 @@ const Dashboard = () => {
           <h5 className="card-title">{editId ? '📝 Edit Barang' : '➕ Tambah Barang Baru'}</h5>
           <form onSubmit={handleSubmit} className="row g-3">
             <div className="col-md-3">
-              <label className="form-label">Nama Barang</label>
-              <input name="name" className="form-control" value={formData.name} onChange={handleChange} required />
+              <label htmlFor="name" className="form-label">Nama Barang</label>
+              <input id="name" name="name" className="form-control" value={formData.name} onChange={handleChange} required />
             </div>
             <div className="col-md-2">
-              <label className="form-label">Kategori</label>
-              <input name="category" className="form-control" value={formData.category} onChange={handleChange} required />
+              <label htmlFor="category" className="form-label">Kategori</label>
+              <input id="category" name="category" className="form-control" value={formData.category} onChange={handleChange} required />
             </div>
             <div className="col-md-2">
-              <label className="form-label">Harga Estimasi</label>
-              <input name="estimatedValue" type="number" className="form-control" value={formData.estimatedValue} onChange={handleChange} required />
+              <label htmlFor="estimatedValue" className="form-label">Harga Estimasi</label>
+              <input id="estimatedValue" name="estimatedValue" type="number" className="form-control" value={formData.estimatedValue} onChange={handleChange} required />
             </div>
             <div className="col-md-3">
-              <label className="form-label">Foto Barang</label>
-              <input id="fileInput" type="file" className="form-control" onChange={handleFileChange} accept="image/*" />
+              <label htmlFor="fileInput" className="form-label">Foto Barang</label>
+              <input id="fileInput" name="image" type="file" className="form-control" onChange={handleFileChange} accept="image/*" />
             </div>
             <div className="col-md-2 d-flex align-items-end">
               <button type="submit" className={`btn w-100 ${editId ? 'btn-warning' : 'btn-primary'}`}>
@@ -157,8 +161,9 @@ const Dashboard = () => {
                 <td>
                   {item.image ? (
                     <img 
-                      src={`http://localhost:5000/uploads/${item.image}`} 
-                      alt="img" 
+                      // MENGGUNAKAN API_URL UNTUK GAMBAR
+                      src={`${API_URL}/uploads/${item.image}`} 
+                      alt={item.name} 
                       style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
                     />
                   ) : (
