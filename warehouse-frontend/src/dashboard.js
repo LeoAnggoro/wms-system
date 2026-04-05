@@ -67,7 +67,7 @@ const Dashboard = () => {
   useEffect(() => {
     const initialToken = localStorage.getItem('token');
     if (!initialToken) {
-    navigate('/login');
+      navigate('/login');
     } else {
       fetchData();
     }

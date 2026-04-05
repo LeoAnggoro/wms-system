@@ -55,46 +55,24 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // URL API dinamis (menggunakan origin jika env tidak ada)
-  const API_URL = (process.env.REACT_APP_API_URL || window.location.origin).replace(/\/$/, "");
+  // MENGAMBIL URL DARI ENV RAILWAY (Penting agar tidak gagal koneksi)
+  const API_URL = (process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app').replace(/\/$/, "");
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
-    // Reset session lama
-    localStorage.clear();
-
-    if (!email || !password) {
-      alert('Email dan password wajib diisi');
-      return;
-    }
-
     setLoading(true);
-
+    
     try {
       const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email: email.trim(),
-        password: password,
+        email,
+        password
       });
 
-      // Simpan token dan data user jika login berhasil
-      if (response.data && response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        
-        if (response.data.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-
-        console.log('✅ Login berhasil');
-        navigate('/dashboard');
-      } else {
-        alert('Login Gagal: Server tidak mengirimkan token akses');
-      }
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard'); 
     } catch (err) {
-      console.error('❌ Login error:', err.response?.data);
-      const pesanError = err.response?.data?.error || "Email atau password salah!";
+      const pesanError = err.response?.data?.error || "Koneksi ke server gagal!";
       alert("Login Gagal: " + pesanError);
-      localStorage.clear();
     } finally {
       setLoading(false);
     }
@@ -112,49 +90,51 @@ const Login = () => {
               <h2 className="fw-bold text-primary">WMS Login</h2>
               <p className="text-muted small">Warehouse Management System</p>
             </div>
-
+            
             <form onSubmit={handleLogin}>
+              {/* Grup Email Address - Diperbaiki dengan htmlFor, id, dan name */}
               <div style={styles.inputGroup}>
                 <label htmlFor="email" className="form-label small fw-bold text-secondary">Email Address</label>
-                <input
-                  type="email"
+                <input 
+                  type="email" 
                   id="email"
+                  name="email"
                   className="form-control form-control-lg border-0 shadow-sm"
-                  placeholder="name@company.com"
+                  placeholder="name@company.com" 
                   style={styles.input}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
+                  required 
                 />
               </div>
 
+              {/* Grup Password - Diperbaiki dengan htmlFor, id, dan name */}
               <div style={styles.inputGroup}>
                 <label htmlFor="password" className="form-label small fw-bold text-secondary">Password</label>
-                <input
-                  type="password"
+                <input 
+                  type="password" 
                   id="password"
+                  name="password"
                   className="form-control form-control-lg border-0 shadow-sm"
-                  placeholder="••••••••"
+                  placeholder="••••••••" 
                   style={styles.input}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  required 
                 />
               </div>
 
               <div className="d-grid gap-2 mt-4">
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-lg shadow-sm"
+                <button 
+                  type="submit" 
+                  className="btn btn-primary btn-lg shadow-sm" 
                   style={styles.button}
                   disabled={loading}
                 >
                   {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2"></span>
-                      Authenticating...
-                    </>
-                  ) : 'Login Sekarang'}
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                  ) : null}
+                  {loading ? 'Authenticating...' : 'Login Sekarang'}
                 </button>
               </div>
             </form>
@@ -166,7 +146,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-
+      
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
