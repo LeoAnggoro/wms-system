@@ -8,7 +8,7 @@ Sistem Manajemen Inventaris Gudang (Fullstack JavaScript) yang dibangun untuk me
 * Secure Authentication:** Login menggunakan JSON Web Token (JWT) dengan enkripsi password menggunakan Bcrypt.
 * Inventory Management:** Manajemen data barang (CRUD) lengkap dengan fitur upload gambar.
 * Database Synchronization:** Menggunakan ORM Sequelize untuk sinkronisasi skema database PostgreSQL secara otomatis.
-* *odern UI:** Interface responsif dengan Bootstrap 5 dan animasi halus dari Framer Motion.
+* Modern UI:** Interface responsif dengan Bootstrap 5 dan animasi halus dari Framer Motion.
 
 ---
 
