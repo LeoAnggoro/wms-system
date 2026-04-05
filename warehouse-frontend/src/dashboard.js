@@ -11,24 +11,27 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
-  // PERBAIKAN 1: Gunakan window.location.origin agar URL Frontend & Backend sinkron di Railway
-  const API_URL = window.location.origin;
+  // Hardcoded API URL
+  const API_URL = 'https://wms-system-production-6dbe.up.railway.app';
 
   const handleLogout = useCallback(() => {
     localStorage.clear();
-    sessionStorage.clear();
     navigate('/login');
   }, [navigate]);
 
-  const fetchData = useCallback(async () => {
+  // Fungsi Fetch Data Utama
+ const fetchData = useCallback(async () => {
+    // Ambil token langsung dari storage setiap kali fungsi dijalankan
     const currentToken = localStorage.getItem('token');
-    
+
     console.log("--- DEBUG FETCH ---");
-    console.log("Domain API:", API_URL);
-    console.log("Token ditemukan:", currentToken ? "Ya" : "TIDAK");
+    console.log("Domain saat ini:", window.location.origin);
+    console.log("Token yang terbaca:", currentToken ? "Ada (Mulai Fetch...)" : "KOSONG/NULL");
 
     if (!currentToken) {
-      handleLogout();
+      console.warn("Fetch dibatalkan karena token tidak ditemukan di localStorage.");
+      // Jika ingin otomatis ke login kalau token hilang:
+      // navigate('/login'); 
       return;
     }
 
@@ -40,16 +43,26 @@ const Dashboard = () => {
           'Accept': 'application/json'
         }
       });
+      let finalData = [];
+      if (Array.isArray(res.data)) {
+        finalData = res.data;
+      } else if (res.data?.data && Array.isArray(res.data.data)) {
+        finalData = res.data.data;
+      } else if (res.data?.items && Array.isArray(res.data.items)) {
+        finalData = res.data.items;
+      }
 
-      let finalData = Array.isArray(res.data) ? res.data : (res.data.data || []);
       setItems(finalData);
     } catch (err) {
-      console.error("Gagal mengambil data:", err.response?.data || err);
-      if (err.response?.status === 401) handleLogout();
+      console.error("Gagal mengambil data:", err.response || err);
+      if (err.response?.status === 401 || err.response?.data?.error === "Token tidak valid") {
+        alert("Sesi berakhir, silakan login kembali.");
+        handleLogout();
+      }
     } finally {
       setLoading(false);
     }
-  }, [handleLogout, API_URL]);
+  }, [handleLogout]);
 
   useEffect(() => {
     const initialToken = localStorage.getItem('token');
@@ -96,8 +109,8 @@ const Dashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const currentToken = localStorage.getItem('token'); 
-    
+    const currentToken = localStorage.getItem('token'); // Pastikan token fresh
+
     try {
       const data = new FormData();
       data.append('name', formData.name);
@@ -108,7 +121,8 @@ const Dashboard = () => {
       const config = {
         headers: {
           Authorization: `Bearer ${currentToken}`,
-          // Browser akan otomatis set 'Content-Type': 'multipart/form-data' dengan boundary yang benar
+          'Content-Type': 'multipart/form-data'
+          //'Content-Type': 'multipart/form-data'
         }
       };
 
@@ -121,12 +135,14 @@ const Dashboard = () => {
         alert("Data berhasil ditambah!");
       }
 
+      // Reset Form
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
       if (document.getElementById('fileInput')) document.getElementById('fileInput').value = "";
+
       fetchData();
     } catch (err) {
-      const errorMsg = err.response?.data?.error || "Token tidak valid atau Sesi Berakhir";
+      const errorMsg = err.response?.data?.error || "Error Server";
       alert("Gagal memproses data: " + errorMsg);
       if (err.response?.status === 401) handleLogout();
     }
@@ -134,7 +150,6 @@ const Dashboard = () => {
 
   return (
     <div className="container mt-4">
-      {/* UI tetap sama seperti kode sebelumnya */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>📦 WMS Inventory</h2>
         <div className="d-flex align-items-center">
@@ -143,9 +158,10 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Form Card */}
       <div className={`card mb-4 border-${editId ? 'warning' : 'primary shadow-sm'}`}>
         <div className="card-body">
-          <h5 className="card-title">{editId ? '📝 Edit Barang' : '➕ Tambah Barang Baru'}</h5>
+          <h5 className="card-title">{editId ? ' Edit Barang' : ' Tambah Barang Baru'}</h5>
           <form onSubmit={handleSubmit} className="row g-3">
             <div className="col-md-3">
               <label className="form-label">Nama Barang</label>
@@ -172,6 +188,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Table Data */}
       <div className="table-responsive">
         <table className="table table-hover align-middle border">
           <thead className="table-dark">
@@ -197,7 +214,9 @@ const Dashboard = () => {
                         style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
                         onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Img'}
                       />
-                    ) : <div className="text-muted small">No Image</div>}
+                    ) : (
+                      <div className="text-muted small">No Image</div>
+                    )}
                   </td>
                   <td className="fw-bold">{item.name}</td>
                   <td><span className="badge bg-light text-dark">{item.category}</span></td>
