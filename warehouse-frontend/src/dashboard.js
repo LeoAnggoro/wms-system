@@ -79,4 +79,29 @@ const Dashboard = () => {
                         onError={(e) => { e.target.src = "https://via.placeholder.com/50?text=Error"; }}
                       />
                     ) : (
-                      <div style={{ width: '50px', height: '50px', backgroundColor: '#eee', borderRadius: '8px', display: 'flex', alignItems:
+                      <div style={{ width: '50px', height: '50px', backgroundColor: '#eee', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>No Img</div>
+                    )}
+                  </td>
+                  <td className="fw-bold">{item?.name || 'Unknown'}</td>
+                  <td><span className="badge bg-info text-dark">{item?.category || 'Umum'}</span></td>
+                  <td>
+                    {/* PROTEKSI: toLocaleString bisa crash kalau datanya null/teks */}
+                    Rp {Number(item?.estimatedValue || 0).toLocaleString()}
+                  </td>
+                  <td className="text-center">
+                    <button onClick={() => startEdit(item)} className="btn btn-sm btn-outline-warning me-2">Edit</button>
+                    <button onClick={() => handleDelete(item?.id)} className="btn btn-sm btn-outline-danger">Hapus</button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr><td colSpan="5" className="text-center text-muted">Belum ada data barang.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
