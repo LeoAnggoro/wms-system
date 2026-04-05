@@ -7,19 +7,13 @@ const Dashboard = () => {
   const [formData, setFormData] = useState({ name: '', category: '', estimatedValue: '' });
   const [imageFile, setImageFile] = useState(null);
   const [editId, setEditId] = useState(null); 
-  const [loading, setLoading] = useState(true); // Tambahkan state loading
+  const [loading, setLoading] = useState(true); 
   
   const navigate = useNavigate(); 
   const token = localStorage.getItem('token');
 
-  // Pastikan URL diakhiri tanpa slash untuk konsistensi
-  const API_URL = (process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app').replace(/\/$/, "");
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-    }
-  }, [token, navigate]);
+  // Hardcoded untuk memastikan koneksi ke backend yang aktif
+  const API_URL = 'https://wms-system-production-6dbe.up.railway.app';
 
   const handleLogout = useCallback(() => {
     localStorage.clear();
@@ -27,16 +21,25 @@ const Dashboard = () => {
     navigate('/login');
   }, [navigate]);
 
+  // Fungsi Fetch Data Utama
   const fetchData = useCallback(async () => {
+    console.log("--- Memulai Fetch Data ---");
+    console.log("Token ditemukan:", token ? "Ya" : "TIDAK (Harus Login)");
+
     if (!token) return;
+
     setLoading(true);
     try {
-      console.log("Memanggil API ke:", `${API_URL}/api/items`);
+      console.log("Request ke:", `${API_URL}/api/items`);
+      
       const res = await axios.get(`${API_URL}/api/items`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
       });
 
-      console.log("Raw Response:", res.data);
+      console.log("Respon Raw dari Server:", res.data);
 
       // Logika pembersihan data agar selalu array
       let finalData = [];
@@ -48,21 +51,27 @@ const Dashboard = () => {
         finalData = res.data.items;
       }
 
+      console.log("Data setelah diolah:", finalData);
       setItems(finalData);
+
     } catch (err) {
-      console.error("Gagal mengambil data:", err);
-      // Jika error 401 (Unauthorized), paksa login ulang
+      console.error("Gagal mengambil data. Detail error:", err.response || err);
       if (err.response?.status === 401) {
+        console.warn("Token tidak valid, diarahkan ke Login...");
         handleLogout();
       }
     } finally {
       setLoading(false);
     }
-  }, [token, API_URL, handleLogout]);
+  }, [token, handleLogout]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!token) {
+      navigate('/login');
+    } else {
+      fetchData();
+    }
+  }, [token, navigate, fetchData]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -183,7 +192,7 @@ const Dashboard = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="5" className="text-center">Memuat data dari Supabase...</td></tr>
+              <tr><td colSpan="5" className="text-center py-4">Memuat data dari server...</td></tr>
             ) : items.length > 0 ? (
               items.map((item) => (
                 <tr key={item.id}>
@@ -207,7 +216,7 @@ const Dashboard = () => {
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="5" className="text-center py-4 text-muted">Belum ada data barang. Silakan tambah barang baru.</td></tr>
+              <tr><td colSpan="5" className="text-center py-4 text-muted">Belum ada data barang atau Anda belum Login ulang.</td></tr>
             )}
           </tbody>
         </table>
