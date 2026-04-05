@@ -11,19 +11,19 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
-  // Fungsi Logout menggunakan Supabase
+  // 1. Fungsi Logout
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     localStorage.clear();
     navigate('/login');
   }, [navigate]);
 
-  // Fungsi Ambil Data dari Tabel 'Items' di Supabase
+  // 2. Fungsi Ambil Data
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('items') // Pastikan nama tabel di Supabase adalah 'items' (huruf kecil)
+        .from('items') 
         .select('*')
         .order('id', { ascending: false });
 
@@ -31,7 +31,7 @@ const Dashboard = () => {
       setItems(data || []);
     } catch (err) {
       console.error("Gagal mengambil data:", err.message);
-      if (err.message.includes("JWT")) {
+      if (err.message.includes("JWT") || err.message.includes("claims")) {
         alert("Sesi berakhir, silakan login kembali.");
         handleLogout();
       }
@@ -40,8 +40,8 @@ const Dashboard = () => {
     }
   }, [handleLogout]);
 
+  // 3. Efek saat pertama kali load
   useEffect(() => {
-    // Cek apakah user sedang login melalui sesi Supabase
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -53,6 +53,7 @@ const Dashboard = () => {
     checkUser();
   }, [navigate, fetchData]);
 
+  // 4. Handler Input
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -84,6 +85,7 @@ const Dashboard = () => {
     }
   };
 
+  // 5. Submit Data (Insert / Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -91,19 +93,18 @@ const Dashboard = () => {
     try {
       let imageUrl = null;
 
-      // 1. Logika Upload Gambar ke Supabase Storage (Jika ada file baru)
+      // Logika Upload Gambar
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        const fileName = `${Date.now()}.${fileExt}`; // Pake Date.now agar nama unik
         const filePath = `inventory/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('inventory-images') // Nama Bucket Anda
+          .from('inventory-images')
           .upload(filePath, imageFile);
 
         if (uploadError) throw uploadError;
 
-        // Ambil Public URL gambar
         const { data: publicUrlData } = supabase.storage
           .from('inventory-images')
           .getPublicUrl(filePath);
@@ -111,14 +112,18 @@ const Dashboard = () => {
         imageUrl = publicUrlData.publicUrl;
       }
 
+      // Payload Data (Sesuaikan nama kolom kiri dengan Database kamu)
       const payload = {
         name: formData.name,
         category: formData.category,
         estimatedValue: parseFloat(formData.estimatedValue),
       };
-      if (imageUrl) payload.image_url = imageUrl; // Simpan URL gambar ke kolom database
 
-      // 2. Insert atau Update Tabel
+      // Hanya update image_url jika ada gambar baru yang diupload
+      if (imageUrl) {
+        payload.image_url = imageUrl;
+      }
+
       if (editId) {
         const { error } = await supabase.from('items').update(payload).eq('id', editId);
         if (error) throw error;
@@ -129,11 +134,12 @@ const Dashboard = () => {
         alert("Data berhasil ditambah!");
       }
 
-      // 3. Reset Form
+      // Reset Form
       setEditId(null);
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
       if (document.getElementById('fileInput')) document.getElementById('fileInput').value = "";
+      
       fetchData();
     } catch (err) {
       alert("Gagal memproses data: " + err.message);
@@ -149,10 +155,9 @@ const Dashboard = () => {
         <button className="btn btn-danger btn-sm" onClick={handleLogout}>Logout</button>
       </div>
 
-      {/* Form Card */}
       <div className={`card mb-4 border-${editId ? 'warning' : 'primary shadow-sm'}`}>
         <div className="card-body">
-          <h5 className="card-title">{editId ? ' Edit Barang' : ' Tambah Barang Baru'}</h5>
+          <h5 className="card-title">{editId ? 'Edit Barang' : 'Tambah Barang Baru'}</h5>
           <form onSubmit={handleSubmit} className="row g-3">
             <div className="col-md-3">
               <label className="form-label">Nama Barang</label>
@@ -179,7 +184,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Table Data */}
       <div className="table-responsive">
         <table className="table table-hover align-middle border">
           <thead className="table-dark">
@@ -206,7 +210,7 @@ const Dashboard = () => {
                   </td>
                   <td className="fw-bold">{item.name}</td>
                   <td><span className="badge bg-light text-dark">{item.category}</span></td>
-                  <td>Rp {Number(item.estimatedValue).toLocaleString('id-ID')}</td>
+                  <td>Rp {Number(item.estimatedValue || 0).toLocaleString('id-ID')}</td>
                   <td className="text-center">
                     <button onClick={() => startEdit(item)} className="btn btn-sm btn-outline-warning me-2">Edit</button>
                     <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-outline-danger">Hapus</button>
