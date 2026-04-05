@@ -17,12 +17,11 @@ const Dashboard = () => {
     navigate('/login');
   }, [navigate]);
 
-  // 1. Fetch Data - Diubah ke 'Items'
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('Items') // DISESUAIKAN: Huruf I besar
+        .from('Items')
         .select('*')
         .order('id', { ascending: false });
 
@@ -69,7 +68,6 @@ const Dashboard = () => {
     window.scrollTo(0, 0);
   };
 
-  // 2. Delete Data - Diubah ke 'Items'
   const handleDelete = async (id) => {
     if (window.confirm("Yakin ingin menghapus barang ini?")) {
       try {
@@ -82,25 +80,13 @@ const Dashboard = () => {
       }
     }
   };
-  const handleInsert = async () => {
-    const { data, error } = await supabase
-    .from('Items')
-    .insert([
-      { 
-        nama_barang: nama, 
-        kategori: kategori, 
-        harga: harga,
-        // TAMBAHKAN BARIS DI BAWAH INI:
-        createdBy: user.id 
-      }
-    ]);
-  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // 1. Pastikan user terautentikasi
+      // 1. Ambil User untuk memastikan sesi aktif
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Sesi login tidak ditemukan.");
 
@@ -126,36 +112,34 @@ const Dashboard = () => {
       }
 
       // 3. Susun Payload 
-      // PENTING: Jika di DB nama kolomnya adalah 'nama_barang', ganti 'name' jadi 'nama_barang'
       const payload = {
         name: formData.name, 
         category: formData.category,
         estimatedValue: parseFloat(formData.estimatedValue),
-        createdBy: 1 // Sesuai tipe Integer di DB kamu (Gunakan ID user yang valid di tabel public.Users)
+        createdBy: 1 // Tetap 1 karena tipe data di DB kamu adalah Integer
       };
 
       if (imageUrl) {
         payload.image_url = imageUrl;
       }
 
-      // 4. Eksekusi
+      // 4. Eksekusi Insert atau Update
       if (editId) {
-        // UPDATE: Biasanya tidak butuh createdBy, tapi mengirimnya juga tidak masalah
         const { error } = await supabase.from('Items').update(payload).eq('id', editId);
         if (error) throw error;
         alert("Data berhasil diupdate!");
       } else {
-        // INSERT: Wajib ada createdBy karena constraint NOT NULL
         const { error } = await supabase.from('Items').insert([payload]);
         if (error) throw error;
         alert("Data berhasil ditambah!");
       }
 
-      // 5. Bersihkan Form
+      // 5. Reset Form
       setEditId(null);
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
-      if (document.getElementById('fileInput')) document.getElementById('fileInput').value = "";
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = "";
       
       fetchData();
     } catch (err) {
