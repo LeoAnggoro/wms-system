@@ -7,19 +7,13 @@ const Dashboard = () => {
   const [formData, setFormData] = useState({ name: '', category: '', estimatedValue: '' });
   const [imageFile, setImageFile] = useState(null);
   const [editId, setEditId] = useState(null); 
-  const [loading, setLoading] = useState(true); // Tambahkan state loading
+  const [loading, setLoading] = useState(true); 
   
   const navigate = useNavigate(); 
   const token = localStorage.getItem('token');
 
-  // Pastikan URL diakhiri tanpa slash untuk konsistensi
-  const API_URL = (process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app').replace(/\/$/, "");
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/login');
-    }
-  }, [token, navigate]);
+  // KOREKSI: Pastikan URL API benar-benar menunjuk ke Railway
+  const API_URL = 'https://wms-system-production-6dbe.up.railway.app';
 
   const handleLogout = useCallback(() => {
     localStorage.clear();
@@ -27,38 +21,44 @@ const Dashboard = () => {
     navigate('/login');
   }, [navigate]);
 
+  useEffect(() => {
+    if (!token) {
+      handleLogout();
+    }
+  }, [token, handleLogout]);
+
   const fetchData = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
       console.log("Memanggil API ke:", `${API_URL}/api/items`);
+      
       const res = await axios.get(`${API_URL}/api/items`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Accept': 'application/json' // PAKSA server kirim JSON, bukan HTML
+        }
       });
 
-      console.log("Raw Response:", res.data);
-
-      // Logika pembersihan data agar selalu array
+      // Validasi apakah data yang datang benar-benar Array atau Object yang punya data
       let finalData = [];
       if (Array.isArray(res.data)) {
         finalData = res.data;
-      } else if (res.data?.data && Array.isArray(res.data.data)) {
+      } else if (res.data && Array.isArray(res.data.data)) {
         finalData = res.data.data;
-      } else if (res.data?.items && Array.isArray(res.data.items)) {
-        finalData = res.data.items;
       }
 
       setItems(finalData);
     } catch (err) {
       console.error("Gagal mengambil data:", err);
-      // Jika error 401 (Unauthorized), paksa login ulang
+      // Jika res.data berisi HTML (doctype), axios akan error di parsing JSON
       if (err.response?.status === 401) {
         handleLogout();
       }
     } finally {
       setLoading(false);
     }
-  }, [token, API_URL, handleLogout]);
+  }, [token, handleLogout]);
 
   useEffect(() => {
     fetchData();
@@ -132,85 +132,91 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-4 pb-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>📦 WMS Inventory</h2>
+        <h2 className="fw-bold text-primary">📦 WMS Inventory</h2>
         <div className="d-flex align-items-center">
-          <span className="me-3 badge bg-success">Online</span>
-          <button className="btn btn-danger btn-sm" onClick={handleLogout}>Logout</button>
+          <span className="me-3 badge bg-success p-2">Server Online</span>
+          <button className="btn btn-outline-danger btn-sm" onClick={handleLogout}>Logout</button>
         </div>
       </div>
 
-      <div className={`card mb-4 border-${editId ? 'warning' : 'primary shadow-sm'}`}>
+      <div className={`card mb-4 ${editId ? 'border-warning shadow' : 'border-0 shadow-sm'}`}>
         <div className="card-body">
-          <h5 className="card-title">{editId ? '📝 Edit Barang' : '➕ Tambah Barang Baru'}</h5>
+          <h5 className="card-title fw-bold mb-3">
+            {editId ? '📝 Edit Barang' : '➕ Tambah Barang Baru'}
+          </h5>
           <form onSubmit={handleSubmit} className="row g-3">
             <div className="col-md-3">
-              <label className="form-label">Nama Barang</label>
-              <input name="name" className="form-control" value={formData.name} onChange={handleChange} required />
+              <label className="form-label small fw-bold">Nama Barang</label>
+              <input name="name" className="form-control" value={formData.name} onChange={handleChange} required placeholder="Contoh: Laptop" />
             </div>
             <div className="col-md-2">
-              <label className="form-label">Kategori</label>
-              <input name="category" className="form-control" value={formData.category} onChange={handleChange} required />
+              <label className="form-label small fw-bold">Kategori</label>
+              <input name="category" className="form-control" value={formData.category} onChange={handleChange} required placeholder="Elektronik" />
             </div>
             <div className="col-md-2">
-              <label className="form-label">Harga Estimasi</label>
+              <label className="form-label small fw-bold">Harga Estimasi (Rp)</label>
               <input name="estimatedValue" type="number" className="form-control" value={formData.estimatedValue} onChange={handleChange} required />
             </div>
             <div className="col-md-3">
-              <label className="form-label">Foto Barang</label>
+              <label className="form-label small fw-bold">Foto Barang</label>
               <input id="fileInput" name="image" type="file" className="form-control" onChange={handleFileChange} accept="image/*" />
             </div>
             <div className="col-md-2 d-flex align-items-end">
-              <button type="submit" className={`btn w-100 ${editId ? 'btn-warning' : 'btn-primary'}`}>
-                {editId ? 'Update' : 'Tambah'}
+              <button type="submit" className={`btn w-100 fw-bold ${editId ? 'btn-warning' : 'btn-primary'}`}>
+                {editId ? 'Update' : 'Simpan'}
               </button>
             </div>
           </form>
         </div>
       </div>
 
-      <div className="table-responsive">
-        <table className="table table-hover align-middle border">
-          <thead className="table-dark">
-            <tr>
-              <th>Foto</th>
-              <th>Nama Barang</th>
-              <th>Kategori</th>
-              <th>Harga</th>
-              <th className="text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="5" className="text-center">Memuat data dari Supabase...</td></tr>
-            ) : items.length > 0 ? (
-              items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    {item.image ? (
-                      <img 
-                        src={`${API_URL}/uploads/${item.image}`} 
-                        alt={item.name} 
-                        style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
-                        onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Img'}
-                      />
-                    ) : "No Image"}
-                  </td>
-                  <td className="fw-bold">{item.name}</td>
-                  <td><span className="badge bg-light text-dark">{item.category}</span></td>
-                  <td>Rp {Number(item.estimatedValue).toLocaleString('id-ID')}</td>
-                  <td className="text-center">
-                    <button onClick={() => startEdit(item)} className="btn btn-sm btn-outline-warning me-2">Edit</button>
-                    <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-outline-danger">Hapus</button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan="5" className="text-center py-4 text-muted">Belum ada data barang. Silakan tambah barang baru.</td></tr>
-            )}
-          </tbody>
-        </table>
+      <div className="card shadow-sm border-0">
+        <div className="table-responsive">
+          <table className="table table-hover align-middle mb-0">
+            <thead className="table-light">
+              <tr>
+                <th className="ps-3">Foto</th>
+                <th>Nama Barang</th>
+                <th>Kategori</th>
+                <th>Harga</th>
+                <th className="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="5" className="text-center py-5"><div className="spinner-border text-primary" role="status"></div><br/>Menghubungkan ke API...</td></tr>
+              ) : items.length > 0 ? (
+                items.map((item) => (
+                  <tr key={item.id}>
+                    <td className="ps-3">
+                      {item.image ? (
+                        <img 
+                          src={`${API_URL}/uploads/${item.image}`} 
+                          alt={item.name} 
+                          style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
+                          onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Img'}
+                        />
+                      ) : (
+                        <div className="bg-light d-flex align-items-center justify-content-center" style={{ width: '50px', height: '50px', borderRadius: '8px' }}>🖼️</div>
+                      )}
+                    </td>
+                    <td className="fw-bold">{item.name}</td>
+                    <td><span className="badge bg-info text-dark">{item.category}</span></td>
+                    <td className="fw-semibold">Rp {Number(item.estimatedValue).toLocaleString('id-ID')}</td>
+                    <td className="text-center">
+                      <button onClick={() => startEdit(item)} className="btn btn-sm btn-link text-warning me-2 text-decoration-none">Edit</button>
+                      <button onClick={() => handleDelete(item.id)} className="btn btn-sm btn-link text-danger text-decoration-none">Hapus</button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan="5" className="text-center py-5 text-muted">Data kosong atau Token kedaluwarsa.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
