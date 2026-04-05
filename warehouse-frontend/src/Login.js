@@ -56,7 +56,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   // MENGAMBIL URL DARI ENV RAILWAY (Penting agar tidak gagal koneksi)
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = (process.env.REACT_APP_API_URL || 'https://wms-system-production-6dbe.up.railway.app').replace(/\/$/, "");
 
   const handleLogin = async (e) => {
     e.preventDefault();
