@@ -136,9 +136,8 @@ const Dashboard = () => {
       
       fetchData();
     } catch (err) {
-      console.error("Error Detail saat POST:", err.response?.data); // Tambahkan ini
-      alert("Gagal memproses data: " + (err.response?.data?.message || err.response?.data?.error || "Error Server"));
-}
+      alert("Gagal memproses data: " + (err.response?.data?.error || "Error Server"));
+    }
   };
 
   return (
