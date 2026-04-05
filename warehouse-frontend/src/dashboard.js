@@ -21,11 +21,11 @@ const Dashboard = () => {
     }
   }, [token, navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.clear();
     sessionStorage.clear();
-    navigate('/login'); 
-  };
+    navigate('/login');
+  }, [navigate]);
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -35,7 +35,7 @@ const Dashboard = () => {
       const res = await axios.get(`${API_URL}/api/items`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       console.log("Raw Response:", res.data);
 
       // Logika pembersihan data agar selalu array
@@ -58,7 +58,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, API_URL]);
+  }, [token, API_URL, handleLogout]);
 
   useEffect(() => {
     fetchData();
