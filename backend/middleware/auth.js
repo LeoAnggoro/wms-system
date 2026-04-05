@@ -15,6 +15,10 @@ module.exports = (req, res, next) => {
     req.user = verified;
     next(); // Lanjut ke controller
   } catch (err) {
-    res.status(400).json({ error: "Token tidak valid" });
+    // Cek apakah token expired atau memang tidak valid
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: "Token sudah kadaluarsa, silakan login kembali" });
+    }
+    return res.status(401).json({ error: "Token tidak valid" });
   }
 };
