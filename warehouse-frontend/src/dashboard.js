@@ -113,17 +113,17 @@ const Dashboard = () => {
 
       // 3. Susun Payload 
       const payload = {
-        name: formData.name, 
-        category: formData.category,
-        estimatedValue: parseFloat(formData.estimatedValue),
-        createdBy: 1 // Tetap 1 karena tipe data di DB kamu adalah Integer
+      name: formData.name, 
+      category: formData.category,
+      estimatedValue: parseFloat(formData.estimatedValue),
+      createdBy: 1 
       };
 
       if (imageUrl) {
         payload.image_url = imageUrl;
       }
 
-      // 4. Eksekusi Insert atau Update
+      //  Eksekusi Insert atau Update
       if (editId) {
         const { error } = await supabase.from('Items').update(payload).eq('id', editId);
         if (error) throw error;
@@ -134,7 +134,7 @@ const Dashboard = () => {
         alert("Data berhasil ditambah!");
       }
 
-      // 5. Reset Form
+      // Reset Form
       setEditId(null);
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
