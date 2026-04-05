@@ -1,4 +1,3 @@
-.qwen/
 node_modules/
 .env
 *.log
