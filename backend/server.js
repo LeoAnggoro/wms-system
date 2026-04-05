@@ -1,24 +1,22 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path"); // Tambahkan ini untuk path static
 require("dotenv").config();
-
-// SESUAIKAN PATH: Tambahkan './backend/'
-const { syncDatabase } = require("./backend/config/db"); 
+const { syncDatabase } = require("./config/db"); 
 
 const app = express();
 
 // Middleware
+// Tambahkan konfigurasi CORS yang lebih spesifik jika perlu, 
+// tapi app.use(cors()) sudah cukup untuk fase development.
 app.use(cors()); 
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
-// Path uploads juga harus diarahkan ke dalam folder backend jika folder uploads ada di sana
-app.use("/uploads", express.static(path.join(__dirname, "backend/uploads")));
-
+// 1. Root route (Cek ini di browser: https://wms-system-production-6dbe.up.railway.app/)
 app.get('/', (req, res) => {
   res.json({ 
     message: "VERSI TERBARU: Server Aktif", 
-    folder_structure: "Root -> Backend Folder",
+    db_status: "Online",
     timestamp: new Date().toISOString()
   });
 });
@@ -26,10 +24,12 @@ app.get('/', (req, res) => {
 console.log("-----------------------------------------");
 console.log("🛠️  MEMULAI PROSES REGISTER ROUTE...");
 
+// 2. Register Routes dengan Pengecekan Eksistensi
 try {
-  // PERBAIKAN UTAMA: Tambahkan './backend/' sebelum nama folder
-  const authRoutes = require("./backend/routes/authRoutes");
-  const itemRoutes = require("./backend/routes/itemRoutes");
+  // Pastikan nama file di folder './routes/' benar-benar 'authRoutes.js' dan 'itemRoutes.js'
+  // Linux (Railway) sangat sensitif terhadap huruf besar/kecil (Case Sensitive)
+  const authRoutes = require("./routes/authRoutes");
+  const itemRoutes = require("./routes/itemRoutes");
 
   app.use("/api/auth", authRoutes);
   console.log("✅ Rute /api/auth BERHASIL dimuat");
@@ -39,24 +39,30 @@ try {
 
 } catch (err) {
   console.error("❌ GAGAL MEMUAT RUTE!");
-  console.error("DETAIL ERROR:", err.message);
-  console.error("STACK TRACE:", err.stack); 
+  console.error("Kemungkinan penyebab: Nama file salah (Besar/Kecil) atau ada error di dalam file rute.");
+  console.error("Error Detail:", err.message);
+  // Kita tidak process.exit(1) di sini agar server tetap nyala dan kita bisa debug root-nya
 }
 
+// 3. Fungsi Start Server
 const startServer = async () => {
+  // Railway memberikan port lewat process.env.PORT secara dinamis
   const PORT = process.env.PORT || 5000; 
   
   try {
-    console.log("📡 Menghubungkan ke Database...");
+    console.log("📡 Sedang mencoba koneksi ke Supabase...");
+    // Memastikan tabel 'Items' dan 'Users' sinkron dengan Supabase
     await syncDatabase();
     console.log("✅ DATABASE SYNC BERHASIL!");
 
+    // Binding ke '0.0.0.0' sangat penting untuk deployment cloud seperti Railway
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 SERVER TERBANG DI PORT ${PORT}`);
+      console.log(`🔗 Akses API di: http://0.0.0.0:${PORT}/api/items`);
     });
   } catch (error) {
-    console.error("🔥 BOOTING GAGAL:");
-    console.error(error.message);
+    console.error("🔥 SERVER GAGAL TOTAL SAAT BOOTING:");
+    console.error(`Pesan Error: ${error.message}`);
     process.exit(1);
   }
 };
