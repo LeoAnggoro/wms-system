@@ -118,11 +118,11 @@ const Dashboard = () => {
       data.append('estimatedValue', formData.estimatedValue);
       if (imageFile) data.append('image', imageFile);
 
-      //Test 123
+      
       const config = {
         headers: {
           Authorization: `Bearer ${currentToken}`,
-          'Content-Type': 'multipart/form-data'
+          //'Content-Type': 'multipart/form-data'
         }
       };
 
