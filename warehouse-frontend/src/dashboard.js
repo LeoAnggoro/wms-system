@@ -11,19 +11,18 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
-  // 1. Fungsi Logout
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     localStorage.clear();
     navigate('/login');
   }, [navigate]);
 
-  // 2. Fungsi Ambil Data
+  // 1. Fetch Data - Diubah ke 'Items'
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('items') 
+        .from('Items') // DISESUAIKAN: Huruf I besar
         .select('*')
         .order('id', { ascending: false });
 
@@ -40,7 +39,6 @@ const Dashboard = () => {
     }
   }, [handleLogout]);
 
-  // 3. Efek saat pertama kali load
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -53,7 +51,6 @@ const Dashboard = () => {
     checkUser();
   }, [navigate, fetchData]);
 
-  // 4. Handler Input
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -72,10 +69,11 @@ const Dashboard = () => {
     window.scrollTo(0, 0);
   };
 
+  // 2. Delete Data - Diubah ke 'Items'
   const handleDelete = async (id) => {
     if (window.confirm("Yakin ingin menghapus barang ini?")) {
       try {
-        const { error } = await supabase.from('items').delete().eq('id', id);
+        const { error } = await supabase.from('Items').delete().eq('id', id);
         if (error) throw error;
         alert("Berhasil dihapus!");
         fetchData();
@@ -85,7 +83,6 @@ const Dashboard = () => {
     }
   };
 
-  // 5. Submit Data (Insert / Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -93,10 +90,9 @@ const Dashboard = () => {
     try {
       let imageUrl = null;
 
-      // Logika Upload Gambar
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`; // Pake Date.now agar nama unik
+        const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `inventory/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
@@ -112,29 +108,27 @@ const Dashboard = () => {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      // Payload Data (Sesuaikan nama kolom kiri dengan Database kamu)
       const payload = {
         name: formData.name,
         category: formData.category,
         estimatedValue: parseFloat(formData.estimatedValue),
       };
 
-      // Hanya update image_url jika ada gambar baru yang diupload
       if (imageUrl) {
         payload.image_url = imageUrl;
       }
 
+      // 3. Insert & Update - Diubah ke 'Items'
       if (editId) {
-        const { error } = await supabase.from('items').update(payload).eq('id', editId);
+        const { error } = await supabase.from('Items').update(payload).eq('id', editId);
         if (error) throw error;
         alert("Data berhasil diupdate!");
       } else {
-        const { error } = await supabase.from('items').insert([payload]);
+        const { error } = await supabase.from('Items').insert([payload]);
         if (error) throw error;
         alert("Data berhasil ditambah!");
       }
 
-      // Reset Form
       setEditId(null);
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);

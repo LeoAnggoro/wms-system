@@ -10,7 +10,12 @@ const getSequelize = () => {
   if (!databaseUrl) {
     throw new Error('DATABASE_URL environment variable is not set di Railway');
   }
-
+const payload = {
+  name: formData.name,
+  category: formData.category,
+  estimated_value: parseFloat(formData.estimatedValue), // Kiri (DB), Kanan (State React)
+  image_url: imageUrl
+};
   // Project ID Supabase kamu
   const projectId = "ajrubsqxqcnblxqjmjsg"; 
 
@@ -63,5 +68,6 @@ const syncDatabase = async () => {
     throw error;
   }
 };
+
 
 module.exports = { getSequelize, syncDatabase };
