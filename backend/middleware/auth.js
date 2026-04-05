@@ -11,7 +11,7 @@ module.exports = (req, res, next) => {
 
   try {
     // Verifikasi token
-    const verified = jwt.verify(token, process.env.JWT_SECRET || "secret");
+    const verified = jwt.verify(token, process.env.JWT_SECRET || "SECRET");
     req.user = verified;
     next(); // Lanjut ke controller
   } catch (err) {
