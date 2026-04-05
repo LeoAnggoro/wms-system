@@ -22,23 +22,28 @@ app.get('/', (req, res) => {
 console.log("-----------------------------------------");
 console.log("🛠️  MEMULAI PROSES REGISTER ROUTE...");
 
+// ... kode sebelumnya ...
+
 try {
-  // RUTE AUTH (Login/Register)
   const authRoutes = require("./routes/authRoutes");
   app.use("/api/auth", authRoutes);
   console.log("✅ Rute /api/auth BERHASIL dimuat");
 
-  // --- EDIT DI SINI: MENAMBAHKAN RUTE ITEMS ---
-  const itemRoutes = require("./routes/itemRoutes"); // Pastikan file itemRoutes.js ada di folder routes
-  app.use("/api/items", itemRoutes);
-  console.log("✅ Rute /api/items BERHASIL dimuat");
-  // --------------------------------------------
+  // Tambahkan pengecekan ini
+  const itemRoutes = require("./routes/itemRoutes");
+  if (itemRoutes) {
+    app.use("/api/items", itemRoutes);
+    console.log("✅ Rute /api/items BERHASIL dimuat");
+  } else {
+    console.error("❌ File itemRoutes ditemukan tapi isinya kosong!");
+  }
 
 } catch (err) {
   console.error("❌ GAGAL memuat rute:", err.message);
+  // Ini penting: Jika file tidak ada, server akan kasih tahu di log Railway
 }
 
-// 2. Fungsi Start Server
+Fungsi Start Server
 const startServer = async () => {
   const PORT = process.env.PORT || 5000;
   
