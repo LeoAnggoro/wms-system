@@ -63,8 +63,7 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Menggunakan API_URL yang dinamis
-      const response = await axios.post(`${API_URL}https://wms-system-production-6dbe.up.railway.app/api/auth/login`, {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password
       });
