@@ -1,18 +1,17 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const [items, setItems] = useState([]);
   const [formData, setFormData] = useState({ name: '', category: '', estimatedValue: '' });
   const [imageFile, setImageFile] = useState(null);
-  const [editId, setEditId] = useState(null); 
-  const [loading, setLoading] = useState(true); 
-  
-  const navigate = useNavigate(); 
-  const token = localStorage.getItem('token');
+  const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Hardcoded untuk memastikan koneksi ke backend yang aktif
+  const navigate = useNavigate();
+  
+  // Hardcoded API URL
   const API_URL = 'https://wms-system-production-6dbe.up.railway.app';
 
   const handleLogout = useCallback(() => {
@@ -23,25 +22,23 @@ const Dashboard = () => {
 
   // Fungsi Fetch Data Utama
   const fetchData = useCallback(async () => {
+    const currentToken = localStorage.getItem('token'); // Ambil token terbaru
     console.log("--- Memulai Fetch Data ---");
-    console.log("Token ditemukan:", token ? "Ya" : "TIDAK (Harus Login)");
 
-    if (!token) return;
+    if (!currentToken) {
+      handleLogout();
+      return;
+    }
 
     setLoading(true);
     try {
-      console.log("Request ke:", `${API_URL}/api/items`);
-      
       const res = await axios.get(`${API_URL}/api/items`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
           'Accept': 'application/json'
         }
       });
 
-      console.log("Respon Raw dari Server:", res.data);
-
-      // Logika pembersihan data agar selalu array
       let finalData = [];
       if (Array.isArray(res.data)) {
         finalData = res.data;
@@ -51,27 +48,26 @@ const Dashboard = () => {
         finalData = res.data.items;
       }
 
-      console.log("Data setelah diolah:", finalData);
       setItems(finalData);
-
     } catch (err) {
-      console.error("Gagal mengambil data. Detail error:", err.response || err);
-      if (err.response?.status === 401) {
-        console.warn("Token tidak valid, diarahkan ke Login...");
+      console.error("Gagal mengambil data:", err.response || err);
+      if (err.response?.status === 401 || err.response?.data?.error === "Token tidak valid") {
+        alert("Sesi berakhir, silakan login kembali.");
         handleLogout();
       }
     } finally {
       setLoading(false);
     }
-  }, [token, handleLogout]);
+  }, [handleLogout]);
 
   useEffect(() => {
-    if (!token) {
+    const initialToken = localStorage.getItem('token');
+    if (!initialToken) {
       navigate('/login');
     } else {
       fetchData();
     }
-  }, [token, navigate, fetchData]);
+  }, [navigate, fetchData]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -83,23 +79,25 @@ const Dashboard = () => {
 
   const startEdit = (item) => {
     setEditId(item.id);
-    setFormData({ 
-      name: item.name || '', 
-      category: item.category || '', 
-      estimatedValue: item.estimatedValue || '' 
+    setFormData({
+      name: item.name || '',
+      category: item.category || '',
+      estimatedValue: item.estimatedValue || ''
     });
     window.scrollTo(0, 0);
   };
 
   const handleDelete = async (id) => {
+    const currentToken = localStorage.getItem('token');
     if (window.confirm("Yakin ingin menghapus barang ini?")) {
       try {
         await axios.delete(`${API_URL}/api/items/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${currentToken}` }
         });
         alert("Berhasil dihapus!");
         fetchData();
       } catch (err) {
+        if (err.response?.status === 401) handleLogout();
         alert("Gagal menghapus: " + (err.response?.data?.error || "Error"));
       }
     }
@@ -107,6 +105,8 @@ const Dashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const currentToken = localStorage.getItem('token'); // Pastikan token fresh
+    
     try {
       const data = new FormData();
       data.append('name', formData.name);
@@ -114,11 +114,11 @@ const Dashboard = () => {
       data.append('estimatedValue', formData.estimatedValue);
       if (imageFile) data.append('image', imageFile);
 
-      const config = { 
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data' 
-        } 
+      const config = {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+          'Content-Type': 'multipart/form-data'
+        }
       };
 
       if (editId) {
@@ -130,13 +130,16 @@ const Dashboard = () => {
         alert("Data berhasil ditambah!");
       }
 
+      // Reset Form
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
-      if (document.getElementById('fileInput')) document.getElementById('fileInput').value = ""; 
+      if (document.getElementById('fileInput')) document.getElementById('fileInput').value = "";
       
       fetchData();
     } catch (err) {
-      alert("Gagal memproses data: " + (err.response?.data?.error || "Error Server"));
+      const errorMsg = err.response?.data?.error || "Error Server";
+      alert("Gagal memproses data: " + errorMsg);
+      if (err.response?.status === 401) handleLogout();
     }
   };
 
@@ -150,6 +153,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Form Card */}
       <div className={`card mb-4 border-${editId ? 'warning' : 'primary shadow-sm'}`}>
         <div className="card-body">
           <h5 className="card-title">{editId ? '📝 Edit Barang' : '➕ Tambah Barang Baru'}</h5>
@@ -179,6 +183,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Table Data */}
       <div className="table-responsive">
         <table className="table table-hover align-middle border">
           <thead className="table-dark">
@@ -204,7 +209,9 @@ const Dashboard = () => {
                         style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
                         onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Img'}
                       />
-                    ) : "No Image"}
+                    ) : (
+                      <div className="text-muted small">No Image</div>
+                    )}
                   </td>
                   <td className="fw-bold">{item.name}</td>
                   <td><span className="badge bg-light text-dark">{item.category}</span></td>
@@ -216,7 +223,7 @@ const Dashboard = () => {
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="5" className="text-center py-4 text-muted">Belum ada data barang atau Anda belum Login ulang.</td></tr>
+              <tr><td colSpan="5" className="text-center py-4 text-muted">Belum ada data barang.</td></tr>
             )}
           </tbody>
         </table>
