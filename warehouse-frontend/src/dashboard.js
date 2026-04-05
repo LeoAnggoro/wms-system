@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 const Dashboard = () => {
   const [items, setItems] = useState([]);
@@ -11,51 +11,27 @@ const Dashboard = () => {
 
   const navigate = useNavigate();
 
-  // Hardcoded API URL
-  const API_URL = 'https://wms-system-production-6dbe.up.railway.app';
-
-  const handleLogout = useCallback(() => {
+  // Fungsi Logout menggunakan Supabase
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut();
     localStorage.clear();
     navigate('/login');
   }, [navigate]);
 
-  // Fungsi Fetch Data Utama
- const fetchData = useCallback(async () => {
-    // Ambil token langsung dari storage setiap kali fungsi dijalankan
-    const currentToken = localStorage.getItem('token');
-
-    console.log("--- DEBUG FETCH ---");
-    console.log("Domain saat ini:", window.location.origin);
-    console.log("Token yang terbaca:", currentToken ? "Ada (Mulai Fetch...)" : "KOSONG/NULL");
-
-    if (!currentToken) {
-      console.warn("Fetch dibatalkan karena token tidak ditemukan di localStorage.");
-      // Jika ingin otomatis ke login kalau token hilang:
-      // navigate('/login'); 
-      return;
-    }
-
+  // Fungsi Ambil Data dari Tabel 'Items' di Supabase
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/items`, {
-        headers: { 
-          Authorization: `Bearer ${currentToken}`,
-          'Accept': 'application/json'
-        }
-      });
-      let finalData = [];
-      if (Array.isArray(res.data)) {
-        finalData = res.data;
-      } else if (res.data?.data && Array.isArray(res.data.data)) {
-        finalData = res.data.data;
-      } else if (res.data?.items && Array.isArray(res.data.items)) {
-        finalData = res.data.items;
-      }
+      const { data, error } = await supabase
+        .from('items') // Pastikan nama tabel di Supabase adalah 'items' (huruf kecil)
+        .select('*')
+        .order('id', { ascending: false });
 
-      setItems(finalData);
+      if (error) throw error;
+      setItems(data || []);
     } catch (err) {
-      console.error("Gagal mengambil data:", err.response || err);
-      if (err.response?.status === 401 || err.response?.data?.error === "Token tidak valid") {
+      console.error("Gagal mengambil data:", err.message);
+      if (err.message.includes("JWT")) {
         alert("Sesi berakhir, silakan login kembali.");
         handleLogout();
       }
@@ -65,12 +41,16 @@ const Dashboard = () => {
   }, [handleLogout]);
 
   useEffect(() => {
-    const initialToken = localStorage.getItem('token');
-    if (!initialToken) {
-      navigate('/login');
-    } else {
-      fetchData();
-    }
+    // Cek apakah user sedang login melalui sesi Supabase
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login');
+      } else {
+        fetchData();
+      }
+    };
+    checkUser();
   }, [navigate, fetchData]);
 
   const handleChange = (e) => {
@@ -92,69 +72,81 @@ const Dashboard = () => {
   };
 
   const handleDelete = async (id) => {
-    const currentToken = localStorage.getItem('token');
     if (window.confirm("Yakin ingin menghapus barang ini?")) {
       try {
-        await axios.delete(`${API_URL}/api/items/${id}`, {
-          headers: { Authorization: `Bearer ${currentToken}` }
-        });
+        const { error } = await supabase.from('items').delete().eq('id', id);
+        if (error) throw error;
         alert("Berhasil dihapus!");
         fetchData();
       } catch (err) {
-        if (err.response?.status === 401) handleLogout();
-        alert("Gagal menghapus: " + (err.response?.data?.error || "Error"));
+        alert("Gagal menghapus: " + err.message);
       }
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const currentToken = localStorage.getItem('token'); // Pastikan token fresh
+    setLoading(true);
 
     try {
-      const data = new FormData();
-      data.append('name', formData.name);
-      data.append('category', formData.category);
-      data.append('estimatedValue', formData.estimatedValue);
-      if (imageFile) data.append('image', imageFile);
+      let imageUrl = null;
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-          'Content-Type': 'multipart/form-data'
-        }
+      // 1. Logika Upload Gambar ke Supabase Storage (Jika ada file baru)
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `inventory/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('inventory-images') // Nama Bucket Anda
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        // Ambil Public URL gambar
+        const { data: publicUrlData } = supabase.storage
+          .from('inventory-images')
+          .getPublicUrl(filePath);
+        
+        imageUrl = publicUrlData.publicUrl;
+      }
+
+      const payload = {
+        name: formData.name,
+        category: formData.category,
+        estimatedValue: parseFloat(formData.estimatedValue),
       };
+      if (imageUrl) payload.image_url = imageUrl; // Simpan URL gambar ke kolom database
 
+      // 2. Insert atau Update Tabel
       if (editId) {
-        await axios.put(`${API_URL}/api/items/${editId}`, data, config);
+        const { error } = await supabase.from('items').update(payload).eq('id', editId);
+        if (error) throw error;
         alert("Data berhasil diupdate!");
-        setEditId(null);
       } else {
-        await axios.post(`${API_URL}/api/items`, data, config);
+        const { error } = await supabase.from('items').insert([payload]);
+        if (error) throw error;
         alert("Data berhasil ditambah!");
       }
 
-      // Reset Form
+      // 3. Reset Form
+      setEditId(null);
       setFormData({ name: '', category: '', estimatedValue: '' });
       setImageFile(null);
       if (document.getElementById('fileInput')) document.getElementById('fileInput').value = "";
-
       fetchData();
     } catch (err) {
-      const errorMsg = err.response?.data?.error || "Error Server";
-      alert("Gagal memproses data: " + errorMsg);
-      if (err.response?.status === 401) handleLogout();
+      alert("Gagal memproses data: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>📦 WMS Inventory</h2>
-        <div className="d-flex align-items-center">
-          <span className="me-3 badge bg-success">Online</span>
-          <button className="btn btn-danger btn-sm" onClick={handleLogout}>Logout</button>
-        </div>
+        <h2>📦 WMS Inventory <small className="text-muted fs-6">(Supabase)</small></h2>
+        <button className="btn btn-danger btn-sm" onClick={handleLogout}>Logout</button>
       </div>
 
       {/* Form Card */}
@@ -176,11 +168,11 @@ const Dashboard = () => {
             </div>
             <div className="col-md-3">
               <label className="form-label">Foto Barang</label>
-              <input id="fileInput" name="image" type="file" className="form-control" onChange={handleFileChange} accept="image/*" />
+              <input id="fileInput" type="file" className="form-control" onChange={handleFileChange} accept="image/*" />
             </div>
             <div className="col-md-2 d-flex align-items-end">
-              <button type="submit" className={`btn w-100 ${editId ? 'btn-warning' : 'btn-primary'}`}>
-                {editId ? 'Update' : 'Tambah'}
+              <button type="submit" className={`btn w-100 ${editId ? 'btn-warning' : 'btn-primary'}`} disabled={loading}>
+                {loading ? 'Proses...' : (editId ? 'Update' : 'Tambah')}
               </button>
             </div>
           </form>
@@ -200,22 +192,17 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
-              <tr><td colSpan="5" className="text-center py-4">Memuat data dari server...</td></tr>
+            {loading && items.length === 0 ? (
+              <tr><td colSpan="5" className="text-center py-4">Memuat data...</td></tr>
             ) : items.length > 0 ? (
               items.map((item) => (
                 <tr key={item.id}>
                   <td>
-                    {item.image ? (
-                      <img 
-                        src={`${API_URL}/uploads/${item.image}`} 
-                        alt={item.name} 
-                        style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
-                        onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Img'}
-                      />
-                    ) : (
-                      <div className="text-muted small">No Image</div>
-                    )}
+                    <img 
+                      src={item.image_url || 'https://via.placeholder.com/50?text=No+Img'} 
+                      alt={item.name} 
+                      style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
+                    />
                   </td>
                   <td className="fw-bold">{item.name}</td>
                   <td><span className="badge bg-light text-dark">{item.category}</span></td>

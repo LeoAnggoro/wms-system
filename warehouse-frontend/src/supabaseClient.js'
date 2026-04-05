@@ -1,0 +1,7 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://ajrubsqxqcnblxqjmjsg.supabase.co'; 
+// Ambil dari Dashboard Supabase -> Settings -> API
+const supabaseAnonKey = 'sb_publishable_9aDmAyLG7K84VIrjnMTGyQ_vPpFYqPt';
+
+export const supabase = createClient(https://ajrubsqxqcnblxqjmjsg.supabase.co, sb_publishable_9aDmAyLG7K84VIrjnMTGyQ_vPpFYqPt);
