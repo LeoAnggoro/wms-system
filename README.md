@@ -21,7 +21,7 @@ Sistem Manajemen Inventaris Gudang (Fullstack JavaScript) yang dibangun untuk me
 * Bootstrap 5 & Framer Motion** (Styling & Animasi)
 
 ### Backend
-* Node.js & Express.js**
+* Node.js & Express.js
 * PostgreSQL (Database)
 * Sequelize (ORM)
 * Multer (File Upload)
