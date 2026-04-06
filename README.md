@@ -28,8 +28,8 @@ Sistem Manajemen Inventaris Gudang (Fullstack JavaScript) yang dibangun untuk me
 * JWT & Bcrypt (Security)
 
 ---
-### Catatam :
-* folder warehouse tidak bisa digunakan untuk frontend menggunakan folder warehouse-frontend, untuk backend menggunakan folder backend
+### Catatan :
+* Anda dapat menggunakan aplikasi untuk simulasi dengan mengakses link dibawah
 * Lihat simulasi aplikasi WMS secara langsung tanpa instalasi:
 
  [ Berikut adalah link CV, Portofolio, dan Video Demo Aplikasi](https://drive.google.com/drive/folders/1rfJO0OnRNZDOiNbJgl-gxpGZ6lJrUu9o)
