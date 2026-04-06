@@ -1,6 +1,6 @@
 # 📦 Warehouse Management System (WMS)
 
-Sistem Manajemen Inventaris Gudang (Fullstack JavaScript) yang dibangun untuk mengelola data barang jaminan dan stok aset secara efisien. Proyek ini mendemonstrasikan integrasi antara **React.js** sebagai Frontend dan *Node.js/Express** sebagai Backend dengan database **PostgreSQL**.
+Sistem Manajemen Inventaris Gudang (Fullstack JavaScript) yang dibangun untuk mengelola data barang jaminan dan stok aset secara efisien. Proyek ini mendemonstrasikan integrasi antara **React.js** sebagai Frontend dan **Node.js/Express** sebagai Backend dengan database **PostgreSQL**.
 
 ---
 
