@@ -89,17 +89,17 @@ const Login = () => {
     setLoading(true);
 
     try {
-      console.log('🔄 Mengirim request login ke server...');
-      console.log('📧 Email:', email.trim());
+      console.log(' Mengirim request login ke server...');
+      console.log(' Email:', email.trim());
       
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email: email.trim(),
         password: password
       });
 
-      console.log('📡 Response dari server:', response);
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response data:', response.data);
+      console.log(' Response dari server:', response);
+      console.log(' Response status:', response.status);
+      console.log(' Response data:', response.data);
 
       // VALIDASI SANGAT KETAT: 
       // 1. Response status HARUS 200
@@ -115,15 +115,15 @@ const Login = () => {
         // LOGIN BERHASIL - simpan token dan user
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        console.log('✅ Login berhasil, token disimpan');
-        console.log('✅ User:', response.data.user);
+        console.log(' Login berhasil, token disimpan');
+        console.log(' User:', response.data.user);
         
         // Redirect ke dashboard
         navigate('/dashboard');
       } else {
         // Response dari server TIDAK sesuai format yang diharapkan
-        console.error('❌ Response server tidak valid');
-        console.error('❌ Response data:', response.data);
+        console.error(' Response server tidak valid');
+        console.error(' Response data:', response.data);
         alert('Login Gagal: Email atau password salah');
         
         // PASTIKAN tidak ada data yang tersimpan
@@ -132,27 +132,27 @@ const Login = () => {
       }
     } catch (err) {
       // ERROR HANDLING: Tangkap SEMUA error dari server
-      console.error('❌ LOGIN ERROR - Detail lengkap:');
-      console.error('❌ Error object:', err);
-      console.error('❌ Error response:', err.response);
-      console.error('❌ Error status:', err.response?.status);
-      console.error('❌ Error data:', err.response?.data);
+      console.error(' LOGIN ERROR - Detail lengkap:');
+      console.error(' Error object:', err);
+      console.error('Error response:', err.response);
+      console.error(' Error status:', err.response?.status);
+      console.error(' Error data:', err.response?.data);
       
       let pesanError = 'Email atau password salah';
       
       // Cek apakah ada pesan error spesifik dari server
       if (err.response?.data?.error) {
         pesanError = err.response.data.error;
-        console.log('⚠️ Error message dari server:', pesanError);
+        console.log(' Error message dari server:', pesanError);
       } else if (err.response?.status === 401) {
         pesanError = 'Email atau password salah';
-        console.log('⚠️ Status 401 - Unauthorized');
+        console.log(' Status 401 - Unauthorized');
       } else if (err.response?.status === 400) {
         pesanError = err.response.data?.error || 'Data tidak valid';
-        console.log('⚠️ Status 400 - Bad Request');
+        console.log(' Status 400 - Bad Request');
       } else if (!err.response) {
         pesanError = 'Tidak bisa terhubung ke server';
-        console.log('⚠️ Tidak ada response dari server');
+        console.log(' Tidak ada response dari server');
       }
       
       alert('Login Gagal: ' + pesanError);

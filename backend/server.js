@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 });
 
 console.log("-----------------------------------------");
-console.log("🛠️  MEMULAI PROSES REGISTER ROUTE...");
+console.log("MEMULAI PROSES REGISTER ROUTE...");
 
 // 2. Register Routes dengan Pengecekan Eksistensi
 try {
@@ -32,13 +32,13 @@ try {
   const itemRoutes = require("./routes/itemRoutes");
 
   app.use("/api/auth", authRoutes);
-  console.log("✅ Rute /api/auth BERHASIL dimuat");
+  console.log("Rute /api/auth BERHASIL dimuat");
 
   app.use("/api/items", itemRoutes);
-  console.log("✅ Rute /api/items BERHASIL dimuat");
+  console.log("Rute /api/items BERHASIL dimuat");
 
 } catch (err) {
-  console.error("❌ GAGAL MEMUAT RUTE!");
+  console.error("GAGAL MEMUAT RUTE!");
   console.error("Kemungkinan penyebab: Nama file salah (Besar/Kecil) atau ada error di dalam file rute.");
   console.error("Error Detail:", err.message);
   // Kita tidak process.exit(1) di sini agar server tetap nyala dan kita bisa debug root-nya
@@ -53,15 +53,15 @@ const startServer = async () => {
     console.log("📡 Sedang mencoba koneksi ke Supabase...");
     // Memastikan tabel 'Items' dan 'Users' sinkron dengan Supabase
     await syncDatabase();
-    console.log("✅ DATABASE SYNC BERHASIL!");
+    console.log("DATABASE SYNC BERHASIL!");
 
     // Binding ke '0.0.0.0' sangat penting untuk deployment cloud seperti Railway
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 SERVER TERBANG DI PORT ${PORT}`);
-      console.log(`🔗 Akses API di: http://0.0.0.0:${PORT}/api/items`);
+      console.log(`SERVER TERBANG DI PORT ${PORT}`);
+      console.log(`Akses API di: http://0.0.0.0:${PORT}/api/items`);
     });
   } catch (error) {
-    console.error("🔥 SERVER GAGAL TOTAL SAAT BOOTING:");
+    console.error("SERVER GAGAL TOTAL SAAT BOOTING:");
     console.error(`Pesan Error: ${error.message}`);
     process.exit(1);
   }

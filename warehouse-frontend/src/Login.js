@@ -76,7 +76,7 @@ const Login = () => {
       if (error) throw error;
 
       // 3. Jika Berhasil
-      console.log('✅ Login berhasil:', data);
+      console.log('Login berhasil:', data);
       
       // Catatan: Supabase secara otomatis menyimpan token ke LocalStorage 
       // dengan nama 'sb-xxxxx-auth-token'. Kamu tidak perlu simpan manual lagi.
@@ -84,7 +84,7 @@ const Login = () => {
       navigate('/dashboard');
 
     } catch (err) {
-      console.error('❌ Login error:', err.message);
+      console.error('Login error:', err.message);
       alert('Login Gagal: ' + err.message);
     } finally {
       setLoading(false);
