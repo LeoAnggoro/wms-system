@@ -31,6 +31,7 @@ Sistem Manajemen Inventaris Gudang (Fullstack JavaScript) yang dibangun untuk me
 ### Catatan :
 * Anda dapat menggunakan aplikasi untuk simulasi dengan mengakses link dibawah
 * Lihat simulasi aplikasi WMS secara langsung tanpa instalasi:
+* untuk mencoba link prototype dapat menggunakan email: leo@3example.com pass: pasword123
 
  [ Berikut adalah link CV, Portofolio, dan Video Demo Aplikasi](https://drive.google.com/drive/folders/1rfJO0OnRNZDOiNbJgl-gxpGZ6lJrUu9o)
  
