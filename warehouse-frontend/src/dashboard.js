@@ -111,12 +111,12 @@ const Dashboard = () => {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      // 3. Susun Payload 
+      // 3. Susun Payload dengan user ID yang benar
       const payload = {
-      name: formData.name, 
-      category: formData.category,
-      estimatedValue: parseFloat(formData.estimatedValue),
-      createdBy: 1 
+        name: formData.name,
+        category: formData.category,
+        estimatedValue: parseFloat(formData.estimatedValue),
+        createdBy: user.id // Gunakan ID dari user yang login
       };
 
       if (imageUrl) {
